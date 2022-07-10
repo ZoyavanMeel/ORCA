@@ -215,7 +215,7 @@ def find_oriCs(
 ) -> dict:
     '''
     Locates potential oriCs on circular bacterial chromosomes based on Z-curve and GC-skew analysis, dnaA box analysis, and dnaA/dnaN gene locations.
-    Three default window_sizes are used: 1, 3 and 5 % of the total genome length. See the README-file in the [GitHub repository](www.github.com/ZoyavanMeel/ORCA) for more information.
+    Three default window_sizes are used: 1, 3 and 5 % of the total genome length. See the README-file in the [GitHub repository](https://github.com/ZoyavanMeel/ORCA/) for more information.
 
     This function either reads a given FASTA and genes_fasta or fetches them using a given accession directly from the NCBI database and calculates its oriC.
 
