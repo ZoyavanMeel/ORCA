@@ -13,13 +13,14 @@ Please, make sure to load the proper file formats into the function, otherwise O
 ... [Peak(middle=3927479, window_size=232082)]
 ```
 
-**Dependencies:**
-- [SciPy 1.8.1](https://scipy.org/)
-- [Pandas 1.4.3](https://pandas.pydata.org/)
-- [NumPy 1.23.0](https://numpy.org/)
-- [Biopython 1.79](https://biopython.org/)
-- [Scikit-learn 1.1.1](https://scikit-learn.org/)
-- [Matplotlib 3.5.2](https://matplotlib.org/)
+**Libraries and Versions used:**
+- [Python 3.9.13](https://www.python.org/)
+  - [SciPy 1.8.1](https://scipy.org/)
+  - [Pandas 1.4.3](https://pandas.pydata.org/)
+  - [NumPy 1.23.0](https://numpy.org/)
+  - [Biopython 1.79](https://biopython.org/)
+  - [Scikit-learn 1.1.1](https://scikit-learn.org/)
+  - [Matplotlib 3.5.2](https://matplotlib.org/)
 
 ### `peak.py`
 This script contains the `Peak`-class. This class is used in handling potential *oriC*s. The `'oriCs'` key in the properties dictionary that is returned by `find_oriCs` consists of a list of `Peak` objects. Each `Peak` represents a potential *oriC* and has attributes for its Z-, G-, and D-score as well as the confidence a potential machine learing model has.
