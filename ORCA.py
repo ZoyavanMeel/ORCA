@@ -235,15 +235,31 @@ def find_oriCs(
     - `show_plot`           : If True, shows plot of ALL found oriCs. Good and bad. Should not be used for analysis -> Make a separate plot for the best oriCs.
 
     Return:
-    - `properties` : Dictionary with properties of all oriC-like regions.
+    - `properties` : Dictionary with properties of all oriC-like regions. NOTE: oriCs are NOT sorted by importance. Recommended way to rank: learning machine decision.
 
-    Example:
+    -----------------------------------------------------------------------------------------------------------------
+
+    Example 1:
+    >>> import joblib, ORCA
+    >>> email = 'example@email.com'
+    >>> model = joblib.load('Machine_Learning/75_train_model.pkl')
+    >>> properties = ORCA.find_oriCs(accession='NC_000962', email=email, api_key=None, model=model)
+    >>> for key in properties.keys():
+    ...    if key in ['accession', 'oriC_middles', 'predictions', 'gc_conc', 'seq_len']
+    ...        print(key, properties[key])
+    accession NC_000962.3
+    oriC_middles [4411229, 3903606]96182, 0.0018586229703817514]
+    D_scores [1.0, 0.0]
+    Predictions [1.0078976155574155, -1.0150783114803241]
+    gc_conc 0.6561466628826449
+    seq_len 4411532
+
+    Example 2:
     >>> oriC_dict = find_oriCs(accession='NC_000913', email='example@email.com')
-    >>> print(oriC_dict['oriCs'])
-    ... [Peak(middle=3927479, window_size=232082)]
+    >>> oriC = oriC_dict['oriCs'][0]
+    >>> print(oriC.z_score)
+    1.0
     '''
-    # NOTE: Potential further improvements:
-    #   - AT% measure of oriC: should be characteristically higher than the rest of the genome.
 
     # Clarification:
     #   Z_oriCs: order of found oriCs according to only the Z-curve
@@ -331,7 +347,7 @@ def find_oriCs(
         'Z_scores'     : Z_scores,
         'G_scores'     : G_scores,
         'D_scores'     : D_scores,
-        'Predictions'  : decisions,
+        'predictions'  : decisions,
         'z_curve'      : (x, y, z),
         'gc_skew'      : gc,
         'gc_conc'      : gc_conc,
@@ -354,3 +370,4 @@ if __name__ == '__main__':
     model   = joblib.load('Machine_Learning/75_train_model.pkl')
 
     properties = find_oriCs(accession='NC_000913', email=email, api_key=None, model=model, show_plot=True)
+    print(properties['oriCs'][0].z_score)
