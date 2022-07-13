@@ -250,9 +250,8 @@ def find_oriCs(
     >>> email = 'example@email.com'
     >>> model = joblib.load('Machine_Learning/75_train_model.pkl')
     >>> properties = ORCA.find_oriCs(accession='NC_000962', email=email, api_key=None, model=model)
-    >>> for key in properties.keys():
-    ...    if key in ['accession', 'oriC_middles', 'predictions', 'gc_conc', 'seq_len']
-    ...        print(key, properties[key])
+    >>> for key in ['accession', 'oriC_middles', 'predictions', 'gc_conc', 'seq_len']:
+    ...     print(key, properties[key])
     accession NC_000962.3
     oriC_middles [4411229, 3903606]96182, 0.0018586229703817514]
     D_scores [1.0, 0.0]

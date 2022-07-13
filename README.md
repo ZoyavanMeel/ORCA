@@ -14,9 +14,8 @@ Please, make sure to load the proper file formats into the function, otherwise O
 >>> email = 'example@email.com'
 >>> model = joblib.load('Machine_Learning/75_train_model.pkl')
 >>> properties = ORCA.find_oriCs(accession='NC_000962', email=email, api_key=None, model=model)
->>> for key in properties.keys():
-...    if key in ['accession', 'oriC_middles', 'predictions', 'gc_conc', 'seq_len']
-...        print(key, properties[key])
+>>> for key in ['accession', 'oriC_middles', 'predictions', 'gc_conc', 'seq_len']:
+...     print(key, properties[key])
 accession NC_000962.3
 oriC_middles [4411229, 3903606]
 Predictions [1.0078976155574155, -1.0150783114803241]
