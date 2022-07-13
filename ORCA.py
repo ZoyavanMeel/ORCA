@@ -222,7 +222,8 @@ def find_oriCs(
     Parameters:
     - `accession`           : Accession number of the sequence to fetch. If no version is provided, will fetch the newest version.
     - `email`               : Email adress of your NCBI account
-    - `api_key`             : API Key for downloading from the NCBI database (E-Utils). Optional (as of 2022/07/10), but necessary if fetching at 10 requests per second or more.
+    - `api_key`             : API Key for downloading from the NCBI database (E-Utils).
+                              Optional (as of 2022/07/10), but necessary if fetching at 10 requests per second or more.
     - `genome_fasta`        : FASTA-file with circular bacterial DNA
     - `genes_fasta`         : FASTA-file with gene info in the same format as when acquired using `E-Utils(db='nuccore', rettype='fasta_cds_na')`
     - `dnaa_boxes`          : If None, will use the [consensus DnaA-box](https://doi.org/10.1093/bib/bbn031): `TTAT(A|T|C|G)CACA`.
@@ -235,7 +236,12 @@ def find_oriCs(
     - `show_plot`           : If True, shows plot of ALL found oriCs. Good and bad. Should not be used for analysis -> Make a separate plot for the best oriCs.
 
     Return:
-    - `properties` : Dictionary with properties of all oriC-like regions. NOTE: oriCs are NOT sorted by importance. Recommended way to rank: learning machine decision.
+    - `properties`          : Dictionary with properties of all oriC-like regions.
+                              NOTE: oriCs are NOT sorted by importance. Recommended way to rank: learning machine decision.
+        - `'oriCs`          : List of Peak-objects. Each Peak has a index position on the given sequence and scores based on the analyses (see: ORCA.pdf).
+        - `'dnaA_boxes'`    : Dictionary with dnaA-box 9-mers as keys and lists of position indices on the given DNA as values.
+                              The indices refer to the position of the 5th base in the 9-mer.
+        - etc.
 
     -----------------------------------------------------------------------------------------------------------------
 
@@ -329,16 +335,17 @@ def find_oriCs(
         warnings.warn(f'\n\n\tAccession: {_accession}. No DnaA-boxes were found: {boxes}\n\tWill not use DnaA-boxes in prediction.\n')
         D_scores = [0] * len(oriCs)
 
+    decisions = [None for i in range(len(oriCs))]
+    if model is not None:
+        decisions = model.decision_function(np.asarray([Z_scores, G_scores, D_scores]).T).tolist()
+    oriC_middles = [oriC.middle for oriC in oriCs]
+
     # Setting Z-, G-, and D-scores
     for i in range(len(oriCs)):
         oriCs[i].z_score = Z_scores[i]
         oriCs[i].g_score = G_scores[i]
         oriCs[i].d_score = D_scores[i]
-
-    decisions = [None for i in range(len(oriCs))]
-    if model is not None:
-        decisions = model.decision_function(np.asarray([Z_scores, G_scores, D_scores]).T).tolist()
-    oriC_middles = [oriC.middle for oriC in oriCs]
+        oriCs[i].decision = decisions[i]
 
     oriC_properties = {
         'accession'    : _accession,
@@ -351,6 +358,7 @@ def find_oriCs(
         'z_curve'      : (x, y, z),
         'gc_skew'      : gc,
         'gc_conc'      : gc_conc,
+        'dnaA_boxes'   : kmers,
         'seq_len'      : seq_len,
         'num_of_genes' : num_of_genes
     }
