@@ -1,28 +1,44 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_Z_curve_3D(Z_curve, name):
-    """3D-plot function with name as tilte"""
-    fig = plt.figure(figsize=(6,6))
+def plot_Z_curve_3D(Z_curve: tuple, name: str = None):
+    """
+    3D-plot function with name as title
+    
+    -----------------------------------------------------------------------
+    Example
+    >>> properties = find_oriCs(accession='NC_000913', email='example@email.com')
+    >>> plot_Z_curve_3D(Z_curve=properties['z_curve'], name='NC_000913')
+    """
+    fig = plt.figure(figsize=(7,7))
     ax = plt.axes(projection='3d')
-    ax.set_xlabel('Purine vs. Pyrimidine', fontsize=10)
-    ax.set_ylabel('Amino vs. Keto', fontsize=10)
-    ax.set_zlabel('Weak vs. Strong H-bond', fontsize=10)
+    ax.set_xlabel('Purine vs. Pyrimidine', fontsize=10, labelpad=15)
+    ax.set_ylabel('Amino vs. Keto', fontsize=10, labelpad=15)
+    ax.set_zlabel('Weak vs. Strong H-bond', fontsize=10, labelpad=15)
 
     x, y, z = Z_curve
-    ax.plot3D(x, y, z, linewidth=0.8)
-    ax.set_title(f'Z-Curve: {name}', fontsize=10,loc='center', pad=20)
+    ax.plot3D(x, y, z, c='b', linewidth=0.8)
+    if name is not None:
+        ax.set_title(f'Z-Curve: {name}', fontsize=10, loc='center', pad=20)
     plt.show()
 
 
-def plot_Z_curve_2D(y_val_list, peaks, labels, name=None):
+def plot_Z_curve_2D(curves, peaks, labels, name=None):
     """
     Plots 2D Z-curve. Can display up to 4 y-axes in a single figure.
-    - `y_val_list` : list of lists with y-axis values
-    - `peaks`      : list with indeces of peaks for arrays in y_val_list
-    - `name`       : used in plot title
+    - `curves` : list of lists with y-axis values
+    - `peaks`  : list with indeces of peaks for arrays in y_val_list
+    - `name`   : used in plot title
+
+    -----------------------------------------------------------------------
+    Example
+    >>> properties = find_oriCs(accession='NC_000913', email='example@email.com')
+    >>> x_comp, y_comp = properties['z_curve'][:2]
+    >>> gc_skew = properties['gc_skew']
+    >>> oriCs = properties['oriC_middles']
+    >>> plot_Z_curve_2D(curves=[x_comp, y_comp, gc_skew], peaks=oriCs, labels=['$x_n$', '$y_n$', '$g_n$'], name='NC_000913')
     """
-    x_len = str(len(y_val_list[0]))
+    x_len = str(len(curves[0]))
     if int(x_len[1]) <= 4:
         x_max = x_len[0] + str(int(x_len[1])+(5-int(x_len[1]))) + '0'*len(x_len[2:])
     else:
@@ -35,7 +51,7 @@ def plot_Z_curve_2D(y_val_list, peaks, labels, name=None):
     fig = plt.figure(figsize=(8,4))
     fig.subplots_adjust(right=0.75, bottom=0.25)
     base_ax = plt.axes()
-    ax_list = [base_ax] + [base_ax.twinx() for i in range(len(y_val_list) - 1)]
+    ax_list = [base_ax] + [base_ax.twinx() for i in range(len(curves) - 1)]
 
     offset = 1
     for axis in ax_list[1:]:
@@ -45,7 +61,7 @@ def plot_Z_curve_2D(y_val_list, peaks, labels, name=None):
     good = False
     while not good:
         yticks_len = 0
-        for i, ax in enumerate(y_val_list):
+        for i, ax in enumerate(curves):
             ubound, lbound = ything * round(max(ax)/ything), ything * round(min(ax)/ything)
             upper = ubound if max(ax) <= ubound else ubound + ything
             lower = lbound if min(ax) >= lbound else lbound - ything
@@ -59,7 +75,7 @@ def plot_Z_curve_2D(y_val_list, peaks, labels, name=None):
             break
 
     handle_list = []
-    for i, ax in enumerate(y_val_list):
+    for i, ax in enumerate(curves):
         peaks_y = np.asarray([ax[j] for j in peaks]) # y refers to the y-axis coordinates, not the y-curve
         ax_list[i].plot(range(len(ax)), ax, color=color_list[i], zorder=2, label=labels[i])
         ax_list[i].scatter(peaks, peaks_y, marker='o', c='k', zorder=3, label='$\it{oriC}$')
@@ -95,7 +111,7 @@ def plot_Z_curve_2D(y_val_list, peaks, labels, name=None):
         labels=labels + ['$\it{oriC}$'],
         bbox_to_anchor=(0.12, -0.35, 0.75, .102),
         loc='center',
-        ncol=len(y_val_list)+1,
+        ncol=len(curves)+1,
         mode="expand",
         borderaxespad=0.
     )
