@@ -32,7 +32,7 @@ seq_len 4411532
 ```
 
 **Libraries and Versions used:**
-- [Python 3.9.13](https://www.python.org/)
+- [Python 3.9.13 - 3.10.5](https://www.python.org/)
   - [SciPy 1.8.1](https://scipy.org/)
   - [Pandas 1.4.3](https://pandas.pydata.org/)
   - [NumPy 1.23.0](https://numpy.org/)
