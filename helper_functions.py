@@ -21,7 +21,7 @@ def connected_to_internet() -> bool:
 
 
 def fetch_file(accession: str, email: str, api_key: Union[str, None], rettype: str) -> TextIO:
-    """Downloads the given file_tpye of the given accession in temporary memory"""
+    """Downloads the given file_type of the given accession in temporary memory"""
     Entrez.email = email
     if api_key is not None: Entrez.api_key = api_key
     try:
@@ -246,7 +246,7 @@ def generate_mismatched_strings(string: str, mismatches: int = 2) -> Generator:
 def get_dnaa_boxes(box_list: list, max_mismatches: int = 2) -> set:
     """
     Standard parameters: Get all unique dnaa-box 9-mers and reverse complements that allow for 0, 1, or 2 mismatches.
-    Sources as comments in function.
+    Sources as comments in function. Check source code for more suggested consensus boxes.
 
     Parameters:
     - `box_list`       : list with strings of dnaa-boxes to use. Make sure all given boxes are 9 bases long.
@@ -254,6 +254,15 @@ def get_dnaa_boxes(box_list: list, max_mismatches: int = 2) -> set:
         E.g. 2 allows all kmers that have 0, 1 or 2 mismatches with the dnaa-box.\n
     Return:
         `dnaa_boxes`   : set of 9-mers matching the given parameters.
+    
+    ------------------------------------------------------------
+    Useful acticles about DnaA(-boxes):
+    - https://doi.org/10.1101/cshperspect.a012922
+    - https://doi.org/10.1093/nar/gkr832
+    - https://doi.org/10.3389/fmicb.2018.00319
+    - https://doi.org/10.1046/j.1365-2958.1996.6481362.x.
+
+    ------------------------------------------------------------
     """
 
     #             Sequences                       DOI                                            Year  Notes
@@ -267,14 +276,6 @@ def get_dnaa_boxes(box_list: list, max_mismatches: int = 2) -> set:
     consensus_5 = [                             # https://doi.org/10.1007/BF00273584            (1991) Only in E. coli K12. Do not use.
         '(T|C)(T|C)(A|T|C)T(A|C)C(A|G)(A|C|T)(A|C)'
     ]
-
-    '''
-    Useful acticles about DnaA(-boxes):
-    - https://doi.org/10.1101/cshperspect.a012922
-    - https://doi.org/10.1093/nar/gkr832
-    - https://doi.org/10.3389/fmicb.2018.00319
-    - https://doi.org/10.1046/j.1365-2958.1996.6481362.x.
-    '''
 
     # Get all dnaa-boxes as strings
     boxes = box_list.copy()
