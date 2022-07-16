@@ -108,7 +108,7 @@ def plot_Z_curve_2D(curves, peaks, labels, name=None):
 
     plt.legend(
         handles=handle_list,
-        labels=labels + ['$\it{oriC}$'],
+        labels=labels + ['Prediction'],
         bbox_to_anchor=(0.12, -0.35, 0.75, .102),
         loc='center',
         ncol=len(curves)+1,

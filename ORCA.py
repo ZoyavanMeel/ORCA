@@ -253,7 +253,7 @@ def find_oriCs(
     >>> for key in ['accession', 'oriC_middles', 'predictions', 'gc_conc', 'seq_len']:
     ...     print(key, properties[key])
     accession NC_000962.3
-    oriC_middles [4411229, 3903606]96182, 0.0018586229703817514]
+    oriC_middles [4411229, 3903606]
     D_scores [1.0, 0.0]
     Predictions [1.0078976155574155, -1.0150783114803241]
     gc_conc 0.6561466628826449
@@ -376,5 +376,5 @@ if __name__ == '__main__':
     email   = 'no_need_for_a_real@email_address.com'
     model   = joblib.load('Machine_Learning/75_train_model.pkl')
 
-    properties = find_oriCs(accession='NC_000913', email=email, api_key=None, model=model, show_plot=True)
+    properties = find_oriCs(accession='NC_000913', email=email, api_key=None, model=model, show_plot=True, show_info=True)
     print(properties['oriCs'][0].z_score)
