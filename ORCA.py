@@ -45,7 +45,7 @@ def calc_disparities(seq: str, k: int, dnaa_boxes: set) -> Tuple[np.ndarray, np.
         z.append( (a + t) - (c + g) ) # Weak vs Strong Hydrogen Bonds
 
         kmer = seq[i:i+k] if i <= seq_len - k else seq[i:] + seq[:k-(seq_len-i)]
-        mid = i+5 if i+5 <= seq_len else i+5 - seq_len
+        mid = i+k//2+1 if i+k//2+1 <= seq_len else i+k//2+1 - seq_len
         try: raw_dict[kmer].append(mid)
         except KeyError: raw_dict[kmer] = [mid]
 
@@ -378,4 +378,5 @@ if __name__ == '__main__':
     model   = joblib.load('Machine_Learning/75_train_model.pkl')
 
     properties = find_oriCs(accession='NC_000913', email=email, api_key=None, model=model, show_plot=True, show_info=True)
+    pf.plot_Z_curve_2D([properties['gc_skew']], [x for y in properties['dnaA_boxes'].values() for x in y], ['$g_n$'])
     print(properties['oriCs'][0].z_score)
