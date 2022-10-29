@@ -290,8 +290,8 @@ def find_oriCs(
     seq_handle = hf.fetch_file(accession, email, api_key, 'fasta') if genome_fasta is None else genome_fasta
     _accession, sequence = hf.read_FASTA(seq_handle)
 
-    seq_len    = len(sequence)
-    gc_conc    = ( sequence.count('G') + sequence.count('C') ) / seq_len
+    seq_len = len(sequence)
+    gc_conc = ( sequence.count('G') + sequence.count('C') ) / seq_len
 
     # Analysing sequence properties
     boxes = hf.get_dnaa_boxes(box_list=dnaa_boxes, max_mismatches=int(max_mismatches))

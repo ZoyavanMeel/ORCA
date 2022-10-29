@@ -82,9 +82,13 @@ class Peak():
         if not isinstance(other, Peak):
             raise ValueError(f'other is a {type(other)}, must be a Peak object')
         # f = five_side, t = three_side
-        f_t, t_f = Peak.calc_dist(self.five_side, other.three_side, self.seq_len), Peak.calc_dist(self.three_side, other.five_side, self.seq_len)
-        f_f, t_t = Peak.calc_dist(self.five_side, other.five_side, self.seq_len), Peak.calc_dist(self.three_side, other.three_side, self.seq_len)
-        a, b = f_t <= self.window_size // 2 or t_f <= self.window_size // 2, f_f <= self.window_size // 2 and t_t <= self.window_size // 2
+        f_t = Peak.calc_dist(self.five_side, other.three_side, self.seq_len)
+        t_f = Peak.calc_dist(self.three_side, other.five_side, self.seq_len)
+        f_f = Peak.calc_dist(self.five_side, other.five_side, self.seq_len)
+        t_t = Peak.calc_dist(self.three_side, other.three_side, self.seq_len)
+
+        a = f_t <= self.window_size // 2 or t_f <= self.window_size // 2
+        b = f_f <= self.window_size // 2 and t_t <= self.window_size // 2
         return a or b
 
 
