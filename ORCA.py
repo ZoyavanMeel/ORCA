@@ -374,8 +374,8 @@ def find_oriCs(
 
 
 if __name__ == '__main__':
-    email   = 'no_need_for_a_real@email_address.com'
-    model   = joblib.load('Machine_Learning/75_train_model.pkl')
+    email = 'no_need_for_a_real@email_address.com'
+    model = joblib.load('Machine_Learning/75_train_model.pkl')
 
     properties = find_oriCs(
         accession='NC_000913', # E. coli K-12
