@@ -377,6 +377,18 @@ if __name__ == '__main__':
     email   = 'no_need_for_a_real@email_address.com'
     model   = joblib.load('Machine_Learning/75_train_model.pkl')
 
-    properties = find_oriCs(accession='NC_000913', email=email, api_key=None, model=model, show_plot=True, show_info=True)
-    pf.plot_Z_curve_2D([properties['gc_skew']], [x for y in properties['dnaA_boxes'].values() for x in y], ['$g_n$'])
+    properties = find_oriCs(
+        accession='NC_000913', # E. coli K-12
+        email=email,
+        api_key=None,
+        model=model,
+        show_plot=True,
+        show_info=True
+    )
+    pf.plot_Z_curve_2D(
+        curves=[properties['gc_skew']],
+        peaks=[x for y in properties['dnaA_boxes'].values() for x in y],
+        labels=['$g_n$'],
+        name="Spread of DnaA-boxes on GC-skew"
+    )
     print(properties['oriCs'][0].z_score)
