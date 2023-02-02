@@ -382,7 +382,7 @@ if __name__ == '__main__':
     model = joblib.load('Machine_Learning/75_train_model.pkl')
 
     properties = find_oriCs(
-        accession='NC_000916', # E. coli K-12
+        accession='NC_000913', # E. coli K-12
         email=email,
         api_key=None,
         model=model,
