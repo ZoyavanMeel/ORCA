@@ -23,7 +23,7 @@ with open(ACCESSIONS_FILE, 'r') as fh:
 if __name__ == '__main__':
     p_download = partial(download, output_folder=OUTPUT_FOLDER, email=EMAIL, api_key=API_KEY)
     for i in range(len(accessions)):
-        download(accessions[i], OUTPUT_FOLDER)
+        download(accessions[i], output_folder=OUTPUT_FOLDER)
         print(f'downloaded: {i+1/len(accessions)}: {accessions[i]}')
     # with mp.Pool(10) as pool:
     #    pool.map(p_download, names)

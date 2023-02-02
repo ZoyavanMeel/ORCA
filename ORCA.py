@@ -64,7 +64,7 @@ def detect_peaks(curve: np.ndarray) -> np.ndarray:
     return np.unique(np.concatenate( (maxima, minima), axis=0))
 
 
-def filter_peaks(curve: np.ndarray, peaks: list, mode: str) -> list:
+def filter_peaks(curve: np.ndarray, peaks: List[Peak], mode: str) -> list:
     '''
     Filters the given peaks based on the type of extreme it should be and the area around the peak in two steps.
     - Filter 1: Check if any windows intersect the window of another peak (circular DNA).
@@ -104,7 +104,7 @@ def filter_peaks(curve: np.ndarray, peaks: list, mode: str) -> list:
     return accepted_peaks
 
 
-def match_peaks(peaks_x: list, peaks_y: list) -> list:
+def match_peaks(peaks_x: List[Peak], peaks_y: List[Peak]) -> list:
     '''Nested list of peaks from x that line up with peaks from y.'''
     matched_peaks = []
     for peak_x, peak_y in product(peaks_x, peaks_y):
@@ -185,7 +185,7 @@ def get_G_scores(matrix: np.ndarray) -> list:
     return [1 - x for x in np.mean(norm_mat, axis=1)]
 
 
-def get_D_scores(current_oriCs: list, kmer_dict: dict) -> list:
+def get_D_scores(current_oriCs: List[Peak], kmer_dict: dict) -> list:
     '''Process the location of dnaa_boxes and rank potential oriCs based on most surrounding dnaa_boxes.'''
     contains_boxes = []
     all_pos = [pos for pos_list in kmer_dict.values() for pos in pos_list]
@@ -196,6 +196,22 @@ def get_D_scores(current_oriCs: list, kmer_dict: dict) -> list:
                 count += 1
         contains_boxes.append(count)
     return [x/sum(contains_boxes) if sum(contains_boxes) != 0 else 0 for x in contains_boxes]
+
+
+def _check_variables(accession: str, email: str, genome_fasta: str, genes_fasta: str):
+    '''Check some input values for the find_oriCs functions and raises potential warnings or errors.'''
+    if genome_fasta is not None and not (genome_fasta[-5:] == 'fasta' or genome_fasta[-3:] == 'fna'):
+        raise ValueError('\'genome_fasta\' does not have extension \'.fasta\' or \'.fna\'. Must be FASTA-file.')
+    if genes_fasta is not None and not (genes_fasta[-5:] == 'fasta' or genes_fasta[-3:] == 'fna'):
+        raise ValueError('\'genes_fasta\' does not have extension \'.fasta\' or \'.fna\'. Must be FASTA-file.')
+    if genome_fasta is None and genes_fasta is None and accession is None:
+        raise ValueError('Did not provide files to read or accession to fetch.')
+    if genome_fasta is not None and accession is not None:
+        warnings.warn('Provided both a fasta to read and an accession to fetch. Will ignore given accession and use accession from \'genome_fasta\'.')
+    if accession is not None and email is None:
+        raise ValueError('Did not provide a email adress for fetching the accession.\n\tCreate an NCBI account at: https://www.ncbi.nlm.nih.gov/\n\tCreate an API_key at: https://www.ncbi.nlm.nih.gov/account/settings/')
+    if genome_fasta is not None and genes_fasta is None and email is None:
+        raise ValueError('Only provided \'genome_fasta\'. Will have to fetch \'genes_fasta\', but you provided no \'email\'.')
 
 
 def find_oriCs(
@@ -228,7 +244,7 @@ def find_oriCs(
     - `genome_fasta`        : FASTA-file with circular bacterial DNA
     - `genes_fasta`         : FASTA-file with gene info in the same format as when acquired using `E-Utils(db='nuccore', rettype='fasta_cds_na')`
     - `dnaa_boxes`          : If None, will use the [consensus DnaA-box](https://doi.org/10.1093/bib/bbn031): `TTAT(A|T|C|G)CACA`.
-                              Else, provide a list of 9 base strings. See the `get_dnaa_boxes` function in helper_functions.py for some more examples of dnaA-boxes.
+                              Else, provide a list of 9 base strings. See the `get_dnaa_boxes` function in `helper_functions.py` for some more examples of dnaA-boxes.
                               Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
     - `max_mismatches`      : Maximum allowed mismatches before a 9-mer is considered to fit the dnaa_box. Recommended: 0; recommended max: 2.
     - `genes_of_interest`   : List of gene names to look for in `genes_fasta`.
@@ -273,18 +289,7 @@ def find_oriCs(
     #   D_oriCs: order of Z_oriCs based on number of DnaA-boxes in its 5%-window.
 
     # Some error handling
-    if genome_fasta is not None and not (genome_fasta[-5:] == 'fasta' or genome_fasta[-3:] == 'fna'):
-        raise ValueError('\'genome_fasta\' does not have extension \'.fasta\' or \'.fna\'. Must be FASTA-file.')
-    if genes_fasta is not None and not (genes_fasta[-5:] == 'fasta' or genes_fasta[-3:] == 'fna'):
-        raise ValueError('\'genes_fasta\' does not have extension \'.fasta\' or \'.fna\'. Must be FASTA-file.')
-    if genome_fasta is None and genes_fasta is None and accession is None:
-        raise ValueError('Did not provide files to read or accession to fetch.')
-    if genome_fasta is not None and accession is not None:
-        warnings.warn('Provided both a fasta to read and an accession to fetch. Will ignore given accession and use accession from \'genome_fasta\'.')
-    if accession is not None and email is None:
-        raise ValueError('Did not provide a email adress for fetching the accession.\n\tCreate an NCBI account at: https://www.ncbi.nlm.nih.gov/\n\tCreate an API_key at: https://www.ncbi.nlm.nih.gov/account/settings/')
-    if genome_fasta is not None and genes_fasta is None and email is None:
-        raise ValueError('Only provided \'genome_fasta\'. Will have to fetch \'genes_fasta\', but you provided no \'email\'.')
+    _check_variables(accession, email, genome_fasta, genes_fasta)
 
     # Sequence fetching and reading
     seq_handle = hf.fetch_file(accession, email, api_key, 'fasta') if genome_fasta is None else genome_fasta
@@ -372,13 +377,12 @@ def find_oriCs(
         pf.plot_Z_curve_2D([x, y, gc], oriC_middles, ['$x_n$', '$y_n$', '$g_n$'])
     return oriC_properties
 
-
 if __name__ == '__main__':
     email = 'no_need_for_a_real@email_address.com'
     model = joblib.load('Machine_Learning/75_train_model.pkl')
 
     properties = find_oriCs(
-        accession='NC_000913', # E. coli K-12
+        accession='NC_000916', # E. coli K-12
         email=email,
         api_key=None,
         model=model,

@@ -139,7 +139,20 @@ def get_adj_mat(peaks_a: list, peaks_b: list = None, seq_len: int = None) -> np.
     Elements in `peaks_a` must be the same type as those in `peaks_b`.
     If elements are integers, `seq_len` must be provided.
     """
-    # Error handling
+    # Error handling and variable initialisation
+    are_integers, adj_mat, iterator = _get_adj_mat_setup(peaks_a, peaks_b, seq_len)
+
+    # The function
+    for (i_a, a), (i_b, b) in iterator:
+        dist = Peak.calc_dist(a, b, seq_len) if are_integers else Peak.calc_dist(a.middle, b.middle, a.seq_len)
+        adj_mat[i_a, i_b] = dist
+        if peaks_b is None:
+            adj_mat[i_b, i_a] = dist
+    return adj_mat
+
+
+def _get_adj_mat_setup(peaks_a: list, peaks_b: list = None, seq_len: int = None):
+    '''Check input variables for get_adj_mat and initialise adj_mat and iterator'''
     are_integers = True if isinstance(peaks_a[0], int) else False
     if are_integers and seq_len is None:
         raise ValueError('Provided list of integers, but did not provide `seq_len`.')
@@ -157,14 +170,7 @@ def get_adj_mat(peaks_a: list, peaks_b: list = None, seq_len: int = None) -> np.
     else:
         adj_mat = np.zeros((len(peaks_a), len(peaks_a)))
         iterator = combinations(enumerate(peaks_a), r=2)
-
-    # The function
-    for (i_a, a), (i_b, b) in iterator:
-        dist = Peak.calc_dist(a, b, seq_len) if are_integers else Peak.calc_dist(a.middle, b.middle, a.seq_len)
-        adj_mat[i_a, i_b] = dist
-        if peaks_b is None:
-            adj_mat[i_b, i_a] = dist
-    return adj_mat
+    return are_integers, adj_mat, iterator
 
 
 def get_connected_groups(peaks: list, adj_mat: np.ndarray, threshold: int) -> list:
@@ -344,7 +350,7 @@ def move_fastas(db_loc, on_cluster=True, split=4):
             shutil.move(path + '/' + sample, new_folder + '/' + sample)
 
 
-def download(accession, email, api_key, output_folder):
+def download(accession: str, output_folder: str, email: str = None, api_key: str = None):
     '''Download the proper file types for large dataset analysis into the output_folder.'''
     Entrez.email = email
     if api_key is not None:
