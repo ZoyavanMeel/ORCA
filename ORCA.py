@@ -29,7 +29,7 @@ def calc_disparities(seq: str, k: int, dnaa_boxes: set) -> Tuple[np.ndarray, np.
     x, y, z, gc = [], [], [], []
     a, c, t, g  = 0, 0, 0, 0
 
-    raw_dict = {}
+    raw_dict = {str: list}
     seq_len  = len(seq)
 
     for i in range(seq_len):
@@ -121,6 +121,8 @@ def get_false_order(seq: str, curve: np.ndarray, oriC_locations: list, mode: str
     false_orders = []
     if len(oriC_locations) > 1:
         n_per_oriC = []
+
+        oriC: Peak
         for oriC in oriC_locations:
             if oriC.split:
                 n = seq[:oriC.three_side].count('N') + seq[oriC.five_side:].count('N')
@@ -153,6 +155,8 @@ def merge_oriCs(curve_size: int, groups: list, window_size: int) -> Tuple[list, 
     mutable = sorted( groups, key=lambda x:len(x), reverse=True )
     total_pot_oriCs = len( [y for x in mutable for y in x] )
     oriCs, Z_scores = [], []
+
+    group: List[Peak]
     for group in mutable:
         group.sort()
         for i in range(len(group)):
@@ -346,6 +350,7 @@ def find_oriCs(
     oriC_middles = [oriC.middle for oriC in oriCs]
 
     # Setting Z-, G-, and D-scores
+    oriCs: List[Peak]
     for i in range(len(oriCs)):
         oriCs[i].z_score = Z_scores[i]
         oriCs[i].g_score = G_scores[i]
@@ -382,7 +387,7 @@ if __name__ == '__main__':
     model = joblib.load('Machine_Learning/75_train_model.pkl')
 
     properties = find_oriCs(
-        accession='NC_000913', # E. coli K-12
+        accession='NC_000117',#'NC_000913', # E. coli K-12
         email=email,
         api_key=None,
         model=model,
