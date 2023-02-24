@@ -3,11 +3,11 @@ import numpy as np
 
 from itertools import combinations, product
 from Bio import SeqIO, Entrez, Seq
-from typing import TextIO, Union, Generator, Tuple, List
+from typing import TextIO, Union, Generator, Tuple
 from urllib.error import HTTPError, URLError
 
 # Self-made module
-from peak import Peak
+from Peak import Peak
 
 
 def connected_to_internet() -> bool:
@@ -40,7 +40,7 @@ def read_FASTA(handle: Union[TextIO, str]) -> Tuple[str, str]:
     return Seq_obj.id, Seq_obj.seq 
 
 
-def read_gene_info(handle: TextIO, genes_list: List[str]) -> Tuple[dict, int]:
+def read_gene_info(handle: TextIO, genes_list: list[str]) -> Tuple[dict, int]:
     """
     Read FASTA-file acquired with rettype='fasta_cds_na'. `genes_list` is a list of names of genes to extract.\n
     Return:
@@ -63,7 +63,7 @@ def read_gene_info(handle: TextIO, genes_list: List[str]) -> Tuple[dict, int]:
     return genes_dict, num_of_genes
 
 
-def extract_locations(seq_len: int, genes_dict: dict) -> List[Peak]:
+def extract_locations(seq_len: int, genes_dict: dict) -> list[Peak]:
     """Returns list of Peaks of the middle position of every gene in the dictionary. `genes_dict` is assumed to be in the format provided by `read_gene_info()`."""
     locations = []
     for gene_dict in genes_dict.values():
@@ -131,7 +131,7 @@ def _split_location(location):
     return locs
 
 
-def get_adj_mat(peaks_a: list, peaks_b: list = None, seq_len: int = None) -> np.ndarray:
+def get_adj_mat(peaks_a: list[Peak], peaks_b: list[Peak] = None, seq_len: int = None) -> np.ndarray:
     """
     Gets adjacency matrix for given list of `Peak` or `int` objects.
     The matrix can be between a list and the elements of itself or between the elements of two lists.

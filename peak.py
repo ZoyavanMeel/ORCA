@@ -1,5 +1,5 @@
-from typing import Union, Tuple, List
-from itertools import combinations
+from typing import Union
+from itertools import combinations, product
 
 class Peak():
     def __init__(self, middle: int, seq_len: int, window_size: int):
@@ -40,7 +40,7 @@ class Peak():
 
 
     @staticmethod
-    def get_peaks_to_merge(peaks: list) -> List[Tuple["Peak", "Peak"]]:
+    def get_peaks_to_merge(peaks: list["Peak"]) -> list[tuple["Peak", "Peak"]]:
         """
         Get the indeces that give the same value in the curve and are in eachothers window.
         Input:
@@ -53,6 +53,16 @@ class Peak():
             if peak_i.contains_point(peak_j.middle):
                 peaks_to_merge.append( (peak_i, peak_j) )
         return peaks_to_merge
+
+
+    @staticmethod
+    def match_peaks(peaks_x: list["Peak"], peaks_y: list["Peak"]) -> list[tuple["Peak", "Peak"]]:
+        '''Nested list of peaks from x that line up with peaks from y.'''
+        matched_peaks = []
+        for peak_x, peak_y in product(peaks_x, peaks_y):
+            if peak_x.intersecting_windows(peak_y):
+                matched_peaks.append( (peak_x, peak_y) )
+        return matched_peaks
 
 
     @staticmethod

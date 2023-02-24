@@ -7,9 +7,11 @@ from itertools import combinations, product
 from typing import Union, Tuple, List
 
 # Self-made modules
-from peak import Peak
+from Peak import Peak
 import helper_functions as hf
 import plotter_functions as pf
+
+from ORCA_refactor import ORCA
 
 # Set cwd to location of this script
 os.chdir( os.path.dirname( os.path.abspath(__file__) ) )
@@ -386,6 +388,16 @@ if __name__ == '__main__':
     email = 'no_need_for_a_real@email_address.com'
     model = joblib.load('Machine_Learning/75_train_model.pkl')
 
+    # orca = ORCA(
+    #     accession='NC_000117',#'NC_000913', # E. coli K-12
+    #     email=email,
+    #     api_key=None,
+    #     model=model,
+    #     show_plot=True,
+    #     show_info=True
+    # )
+    # orca.find_oriCs()
+
     properties = find_oriCs(
         accession='NC_000117',#'NC_000913', # E. coli K-12
         email=email,
@@ -394,6 +406,8 @@ if __name__ == '__main__':
         show_plot=True,
         show_info=True
     )
+
+
     pf.plot_Z_curve_2D(
         curves=[properties['gc_skew']],
         peaks=[x for y in properties['dnaA_boxes'].values() for x in y],
