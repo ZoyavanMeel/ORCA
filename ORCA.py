@@ -1,5 +1,5 @@
 # Libraries
-import os, warnings, joblib
+import os, warnings, joblib, time
 import scipy.signal as sp
 import numpy as np
 
@@ -11,7 +11,7 @@ from Peak import Peak
 import helper_functions as hf
 import plotter_functions as pf
 
-from ORCA_refactor import ORCA
+import ORCA_refactor as ORCA
 
 # Set cwd to location of this script
 os.chdir( os.path.dirname( os.path.abspath(__file__) ) )
@@ -388,25 +388,24 @@ if __name__ == '__main__':
     email = 'no_need_for_a_real@email_address.com'
     model = joblib.load('Machine_Learning/75_train_model.pkl')
 
-    # orca = ORCA(
-    #     accession='NC_000117',#'NC_000913', # E. coli K-12
-    #     email=email,
-    #     api_key=None,
-    #     model=model,
-    #     show_plot=True,
-    #     show_info=True
-    # )
-    # orca.find_oriCs()
+    start = time.perf_counter()
+    orca_dict = ORCA.find_oriCs(
+        accession='NC_000913', # E. coli K-12       #'NC_000117'
+        email=email,
+        model=model
+    )
+    print(time.perf_counter() - start)
 
+    start = time.perf_counter()
     properties = find_oriCs(
-        accession='NC_000117',#'NC_000913', # E. coli K-12
+        accession='NC_000913',#'NC_000913', # E. coli K-12
         email=email,
         api_key=None,
         model=model,
-        show_plot=True,
-        show_info=True
+        show_plot=False,
+        show_info=False
     )
-
+    print(time.perf_counter() - start)
 
     pf.plot_Z_curve_2D(
         curves=[properties['gc_skew']],

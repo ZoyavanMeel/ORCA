@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.signal as sp
+from scipy.signal import find_peaks
 from itertools import combinations
 from Peak import Peak
 
@@ -24,9 +24,9 @@ class Curve:
 
     def detect_peaks(self) -> np.ndarray:
         '''Calculates peaks of 1D-np.array and returns its indeces.'''
-        maxima, _ = sp.find_peaks( self.curve, distance=len(self.curve)//12)
+        maxima, _ = find_peaks( self.curve, distance=len(self.curve)//12)
         maxima    = np.append(maxima, self.curve.argmax())
-        minima, _ = sp.find_peaks( np.negative(self.curve), distance=len(self.curve)//12)
+        minima, _ = find_peaks( np.negative(self.curve), distance=len(self.curve)//12)
         minima    = np.append(minima, self.curve.argmin())
         return np.unique(np.concatenate( (maxima, minima), axis=0))
     

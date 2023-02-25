@@ -1,6 +1,8 @@
 from typing import Union
 from itertools import combinations, product
 
+import numpy as np
+
 class Peak():
     def __init__(self, middle: int, seq_len: int, window_size: int):
         '''
@@ -63,6 +65,93 @@ class Peak():
             if peak_x.intersecting_windows(peak_y):
                 matched_peaks.append( (peak_x, peak_y) )
         return matched_peaks
+
+
+    @staticmethod
+    def get_adjacency_matrix(peaks_a: list["Peak"], peaks_b: list["Peak"] = None, seq_len: int = None) -> np.ndarray:
+        """
+        Gets adjacency matrix for given list of `Peak` or `int` objects.
+        The matrix can be between a list and the elements of itself or between the elements of two lists.
+        All elements in each list must be of the same type.
+        Elements in `peaks_a` must be the same type as those in `peaks_b`.
+        If elements are integers, `seq_len` must be provided.
+        """
+
+        # Error handling and variable initialisation
+        are_integers = True if isinstance(peaks_a[0], int) else False
+        if are_integers and seq_len is None:
+            raise ValueError('Provided list of integers, but did not provide `seq_len`.')
+        if not all(isinstance(x, type(peaks_a[0])) for x in peaks_a[1:]):
+            raise ValueError('Not all elements in `peaks_a` are of the same type.')
+
+        if peaks_b is not None:
+            if not all(isinstance(x, type(peaks_a[0])) for x in peaks_a[1:]):
+                raise ValueError('Not all elements in `peaks_b` are of the same type.')
+            if not isinstance(peaks_b[0], type(peaks_a[0])):
+                raise ValueError('Elements is `peaks_a` are not the same type as `peaks_b`.')
+
+            adj_mat = np.zeros((len(peaks_a), len(peaks_b)))
+            iterator = product(enumerate(peaks_a), enumerate(peaks_b))
+        else:
+            adj_mat = np.zeros((len(peaks_a), len(peaks_a)))
+            iterator = combinations(enumerate(peaks_a), r=2)
+
+        # The function
+        for (i_a, a), (i_b, b) in iterator:
+            dist = Peak.calc_dist(a, b, seq_len) if are_integers else Peak.calc_dist(a.middle, b.middle, a.seq_len)
+            adj_mat[i_a, i_b] = dist
+            if peaks_b is None:
+                adj_mat[i_b, i_a] = dist
+        return adj_mat
+
+
+    @staticmethod
+    def get_connected_groups(peaks: list, adj_mat: np.ndarray, threshold: int) -> list:
+        """Recursively find connected groups in an undirected graph"""
+
+        def get_connected_groups_init(peaks: list, adj_mat: np.ndarray, threshold: int) -> list:
+            """Private: Groups initial indices of `peaks`."""
+            visited = [False] * len(peaks)
+            connected_groups_idx = []
+            for i in range(len(peaks)):
+                if not visited[i]:
+                    group = []
+                    _, _, visited, group, _ = DFS_recurse(i, adj_mat, visited, group, threshold=threshold)
+                    connected_groups_idx.append(group)
+            return connected_groups_idx
+
+
+        def DFS_recurse(idx, adj_mat, visited, connected_list, threshold):
+            """Private: used by _get_connected_groups_init for recursion"""
+            visited[idx] = True
+            connected_list.append(idx)
+            for i in range(len(visited)):
+                if i == idx:
+                    continue
+                elif adj_mat[i][idx] <= threshold and not visited[i]:
+                    _, _, visited, connected_list, _ = DFS_recurse(i, adj_mat,visited, connected_list, threshold)
+            return idx, adj_mat, visited, connected_list, threshold
+
+        connected_groups_idx = get_connected_groups_init(peaks, adj_mat, threshold)
+        accepted_groups_idx = []
+        for group_idx in connected_groups_idx:
+            flag = False
+            for i, j in combinations(group_idx, r=2):
+                if adj_mat[i][j] > threshold*3:
+                    group_vals = [peaks[i] for i in group_idx]
+                    group_matrix = Peak.get_adjacency_matrix(group_vals, seq_len=200)
+                    split_group_idx = get_connected_groups_init(group_vals, group_matrix, threshold//2)
+                    split_group = [[group_idx[i] for i in group] for group in split_group_idx]
+                    accepted_groups_idx.extend(split_group)
+                    flag = True
+                    break
+            if not flag:
+                accepted_groups_idx.append(group_idx)
+            else:
+                flag = False
+                
+        connected_groups_vals = [ [peaks[i] for i in idx_group] for idx_group in accepted_groups_idx ]
+        return connected_groups_vals
 
 
     @staticmethod
