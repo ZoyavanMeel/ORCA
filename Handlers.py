@@ -4,9 +4,9 @@ from typing import TextIO, Union, Tuple, Generator
 from urllib.error import HTTPError, URLError
 
 import numpy as np
+from scipy.signal import find_peaks
 from Bio import Seq, SeqIO, Entrez
 
-from Curve import Curve
 from Peak import Peak
 
 
@@ -26,7 +26,7 @@ class FileHandler:
 
 
     @staticmethod
-    def read_FASTA(handle: Union[TextIO, str]) -> Tuple[str, str]:
+    def read_FASTA(handle: Union[TextIO, str]) -> Tuple[str, Seq.Seq]:
         """Read a FASTA file and returns the name and sequence of only the first entry in the file"""
         Seq_records = SeqIO.parse(handle, 'fasta')
         Seq_obj = next(Seq_records)
@@ -159,10 +159,10 @@ class SequenceHandler:
 
         # Parsing sequence properties
         self.pot_boxes = self.get_dnaa_boxes(box_list=args['dnaa_boxes'], max_mismatches=args['max_mismatches'])
-        self.x, self.y, self.z, self.gc, self.dnaa_dict = self.calc_disparities(sequence)
+        self.calc_disparities(str(sequence))
 
 
-    def calc_disparities(self, seq: str) -> tuple[Curve, Curve, Curve, Curve, dict]:
+    def calc_disparities(self, seq: str):
         '''
         Z-curve and GC-skew calculation and k-mer indexing. In one function so only one iteration of the sequence is necessary.\n
         Parameters:
@@ -173,11 +173,11 @@ class SequenceHandler:
             `x`, `y`, `z`, `gc` : 1D-np.arrays of the three Z-curve components and 1D-np.array of the GC-skew
             `dnaa_dict`         : Dictionary of starting indexes of dnaa-boxes in `seq`
         '''
-        k = len(list(self.pot_boxes)[0])
+        k = len(self.pot_boxes[0])
         x, y, z, gc = [], [], [], []
         a, c, t, g  = 0, 0, 0, 0
 
-        raw_dict = {str: list}
+        raw_dict = {}
         seq_len  = len(seq)
 
         for i in range(seq_len):
@@ -193,15 +193,12 @@ class SequenceHandler:
             z.append( (a + t) - (c + g) ) # Weak vs Strong Hydrogen Bonds
 
             kmer = seq[i:i+k] if i <= seq_len - k else seq[i:] + seq[:k-(seq_len-i)]
-            mid = i+k//2+1 if i+k//2+1 <= seq_len else i+k//2+1 - seq_len
-            try: raw_dict[kmer].append(mid)
-            except KeyError: raw_dict[kmer] = [mid]
+            if kmer in self.pot_boxes:
+                mid = i+k//2+1 if i+k//2+1 <= seq_len else i+k//2+1 - seq_len
+                try: raw_dict[kmer].append(mid)
+                except KeyError: raw_dict[kmer] = [mid]
 
-        # & assumes .keys() as a set (which it should as dict keys are unique). .intersection() assumes .keys as a list and set.intersection(list) has a worse time-complexity. https://wiki.python.org/moin/TimeComplexity
-        keys = self.pot_boxes & raw_dict.keys()
-        dnaa_dict = {key : raw_dict[key] for key in keys}
-        del raw_dict
-        return Curve(np.asarray(x), 'min'), Curve(np.asarray(y), 'max'), Curve(np.asarray(z), ''), Curve(np.asarray(gc), 'min'), dnaa_dict
+        (self.x, self.y, self.z, self.gc, self.dnaa_dict) = (np.asarray(x), np.asarray(y), np.asarray(z), np.asarray(gc), raw_dict)
 
 
     def analyse_Z_curve(self) -> list[Peak]:
@@ -209,9 +206,9 @@ class SequenceHandler:
         peaks = []
         for fraction in self.windows:
             window_size = int(self.length * fraction)
-            peaks_x  = self.x.process_array(window_size=window_size)
-            peaks_y  = self.y.process_array(window_size=window_size)
-            peaks_gc = self.gc.process_array(window_size=window_size)
+            peaks_x  = SequenceHandler.process_array(self.x, 'min', window_size=window_size)
+            peaks_y  = SequenceHandler.process_array(self.y, 'max', window_size=window_size)
+            peaks_gc = SequenceHandler.process_array(self.gc, 'min', window_size=window_size)
             peaks.extend( [j for i in self.curve_combinations( (peaks_x, peaks_y, peaks_gc) ) for j in i] )
         return peaks
 
@@ -272,7 +269,72 @@ class SequenceHandler:
 
 
     @staticmethod
-    def get_dnaa_boxes(box_list: list, max_mismatches: int = 2) -> set:
+    def process_array(curve: np.ndarray, mode: str, window_size: int) -> list:
+        '''Runs the given 1D-array (curve) through all processing functions for oriC identification. Returns its peaks'''
+        init_peaks = [Peak(peak, curve.shape[0], window_size) for peak in SequenceHandler.detect_peaks(curve)]
+        accepted_peaks = SequenceHandler.filter_peaks(curve, mode, init_peaks)
+        peaks_to_merge = Peak.get_peaks_to_merge(accepted_peaks)
+
+        single_peaks = [x for x in accepted_peaks if not any(x in y for y in peaks_to_merge)]
+        merged_peaks = [Peak(to_merge[0].get_middle(to_merge[1]), curve.shape[0], window_size) for to_merge in peaks_to_merge]
+        return single_peaks + merged_peaks
+    
+
+    @staticmethod
+    def detect_peaks(curve: np.ndarray) -> np.ndarray:
+        '''Calculates peaks of 1D-np.array and returns its indeces.'''
+        maxima, _ = find_peaks( curve, distance=curve.shape[0]//12)
+        maxima    = np.append(maxima, curve.argmax())
+        minima, _ = find_peaks( np.negative(curve), distance=curve.shape[0]//12)
+        minima    = np.append(minima, curve.argmin())
+        return np.unique(np.concatenate( (maxima, minima), axis=0))
+    
+
+    @staticmethod
+    def filter_peaks(curve: np.ndarray, mode: str, peaks: list[Peak]) -> list[Peak]:
+        '''
+        Filters the given peaks based on the type of extreme it should be and the area around the peak in two steps.
+        - Filter 1: Check if any windows intersect the window of another peak (circular DNA).
+        - Filter 2: Check if peaks are actually the extreme in their windows.\n
+        Input:
+        - `curve`          : 1D-np.array
+        - `peaks`          : list of Peaks of curve
+        - `mode`           : 'max'|'min'. Which type of extreme do you want to find?\n
+        Return:
+        - `accepted_peaks` : peaks that passed both filters
+        '''
+        rejected_peaks = []
+        for peak_i, peak_j in combinations(peaks, 2):
+            # Filter 1: Check if any windows intersecting the window of peak i
+            if peak_i.intersecting_windows(peak_j):
+                # Either peaks at the beginning and end of the DNA sequence or a peak found by sp.find_peaks() that is very close to the global min/max 
+                if mode == 'max':
+                    reject_middle = np.where( curve == min(curve[peak_i.middle], curve[peak_j.middle]) )[0].tolist()
+                elif mode == 'min':
+                    reject_middle = np.where( curve == max(curve[peak_i.middle], curve[peak_j.middle]) )[0].tolist()
+                rejected_peaks.append(peak_i) if peak_i.middle in reject_middle else rejected_peaks.append(peak_j)
+
+        for peak in peaks:
+            # Filter 2: Check if peaks are actually the extreme in their windows
+            if peak.split:
+                a, b = (peak.five_side, len(curve)-1), (0, peak.three_side)
+                comparator_win = a if (peak.middle >= a[0] and peak.middle <= a[1]) else b
+            else:
+                comparator_win = (peak.five_side, peak.three_side)
+
+            if mode == 'max' and np.max( curve[comparator_win[0]:comparator_win[1]] ) > curve[peak.middle]:
+                    rejected_peaks.append(peak)
+            elif mode == 'min' and np.min( curve[comparator_win[0]:comparator_win[1]] ) < curve[peak.middle]:
+                    rejected_peaks.append(peak)
+
+        # Create list of peaks that passed both filters
+        rejected_peaks = set(rejected_peaks)
+        accepted_peaks = [x for x in peaks if x not in rejected_peaks]
+        return accepted_peaks
+
+
+    @staticmethod
+    def get_dnaa_boxes(box_list: list, max_mismatches: int = 2) -> list:
         """
         Standard parameters: Get all unique dnaa-box 9-mers and reverse complements that allow for 0, 1, or 2 mismatches.
         Sources as comments in function. Check source code for more suggested consensus boxes.
@@ -337,7 +399,7 @@ class SequenceHandler:
         for box in boxes:
             for i in range(abs(max_mismatches)):
                 mismatch_boxes.extend(list(generate_mismatched_strings(box, i+1)))
-        return set(mismatch_boxes)
+        return mismatch_boxes
 
 
 

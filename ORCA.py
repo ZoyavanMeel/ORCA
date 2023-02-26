@@ -17,7 +17,7 @@ import ORCA_refactor as ORCA
 os.chdir( os.path.dirname( os.path.abspath(__file__) ) )
 
 
-def calc_disparities(seq: str, k: int, dnaa_boxes: set) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict]:
+def calc_disparities(seq: str, k: int, dnaa_boxes: set[str]) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict]:
     '''
     Z-curve and GC-skew calculation and k-mer indexing. In one function so only one iteration of the sequence is necessary.\n
     Parameters:
@@ -394,7 +394,7 @@ if __name__ == '__main__':
         email=email,
         model=model
     )
-    print(time.perf_counter() - start)
+    print('new', time.perf_counter() - start)
 
     start = time.perf_counter()
     properties = find_oriCs(
@@ -405,12 +405,12 @@ if __name__ == '__main__':
         show_plot=False,
         show_info=False
     )
-    print(time.perf_counter() - start)
+    print('old', time.perf_counter() - start)
 
-    pf.plot_Z_curve_2D(
-        curves=[properties['gc_skew']],
-        peaks=[x for y in properties['dnaA_boxes'].values() for x in y],
-        labels=['$g_n$'],
-        name="Spread of DnaA-boxes on GC-skew"
-    )
-    print(properties['oriCs'][0].z_score)
+    # pf.plot_Z_curve_2D(
+    #     curves=[properties['gc_skew']],
+    #     peaks=[x for y in properties['dnaA_boxes'].values() for x in y],
+    #     labels=['$g_n$'],
+    #     name="Spread of DnaA-boxes on GC-skew"
+    # )
+    # print(properties['oriCs'][0].z_score)

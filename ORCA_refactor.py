@@ -140,8 +140,8 @@ def find_oriCs(**kwargs):
         'G_scores'     : G_scores,
         'D_scores'     : D_scores,
         'predictions'  : decisions,
-        'z_curve'      : (seq_handler.x.curve, seq_handler.y.curve, seq_handler.z.curve),
-        'gc_skew'      : seq_handler.gc.curve,
+        'z_curve'      : (seq_handler.x, seq_handler.y, seq_handler.z),
+        'gc_skew'      : seq_handler.gc,
         'gc_conc'      : seq_handler.gc_conc,
         'dnaA_boxes'   : seq_handler.dnaa_dict
     })
