@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_Z_curve_3D(Z_curve: tuple, name: str = None):
+def plot_Z_curve_3D(Z_curve: tuple[np.ndarray, np.ndarray, np.ndarray], name: str = None):
     """
     3D-plot function with name as title
     
@@ -23,12 +23,13 @@ def plot_Z_curve_3D(Z_curve: tuple, name: str = None):
     plt.show()
 
 
-def plot_Z_curve_2D(curves, peaks, labels, name=None):
+def plot_Z_curve_2D(curves: tuple[np.ndarray], peaks: list[int], labels: list[str], name: str = None):
     """
     Plots 2D Z-curve. Can display up to 4 y-axes in a single figure.
-    - `curves` : list of lists with y-axis values
-    - `peaks`  : list with indeces of peaks for arrays in y_val_list
-    - `name`   : used in plot title
+    - `curves` : list of lists with y-axis values.
+    - `peaks`  : list with indeces to plot onto the `curves`.
+    - `labels` : list of names of each curve in `curves`.
+    - `name`   : used in plot title.
 
     -----------------------------------------------------------------------
     Example
@@ -118,7 +119,7 @@ def plot_Z_curve_2D(curves, peaks, labels, name=None):
     plt.show()
 
 
-def plot_skew(skewArray, peaks, name):
+def plot_skew(skewArray: np.ndarray, peaks: list[int], name: str):
     """Plots single skew diagram and its peaks"""
 
     fig = plt.figure()

@@ -33,7 +33,7 @@ def fetch_file(accession: str, email: str, api_key: Union[str, None], rettype: s
         raise ConnectionError('You are fetching a file from the NCBI servers. Please make sure you have an internet connection to do so.') from NoConnection
 
 
-def read_FASTA(handle: Union[TextIO, str]) -> Tuple[str, str]:
+def read_FASTA(handle: Union[TextIO, str]) -> Tuple[str, Seq.Seq]:
     """Read a FASTA file and returns the name and sequence of only the first entry in the file"""
     Seq_records = SeqIO.parse(handle, 'fasta')
     Seq_obj = next(Seq_records)
