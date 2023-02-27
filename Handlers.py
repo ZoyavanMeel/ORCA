@@ -469,7 +469,7 @@ class GeneHandler:
 
 
     @staticmethod
-    def split_location(location):
+    def split_location(location: str) -> list[str]:
         """
         Splits a `location` string into its location groups.
 
