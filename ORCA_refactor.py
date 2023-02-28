@@ -108,7 +108,7 @@ def find_oriCs(**kwargs):
     try:
         # Gene-location analysis
         gene_locations = gene_handler.analyse_gene_locations(oriCs)
-        G_scores, warning = gene_handler.calculate_G_scores(oriCs, gene_locations)
+        G_scores, warning = GeneHandler.calculate_G_scores(oriCs, gene_locations)
         if warning:
             warnings.warn(
                 f'Accession: {args["accession"]}.\n' +
@@ -153,7 +153,7 @@ def find_oriCs(**kwargs):
         print('D-scores    :', D_scores)
         print('oriCs       :', oriC_middles)
     if args['show_plot']:
-        pf.plot_Z_curve_2D([seq_handler.x.curve, seq_handler.y.curve, seq_handler.gc.curve], oriC_middles, ['$x_n$', '$y_n$', '$g_n$'])
+        pf.plot_Z_curve_2D([seq_handler.x, seq_handler.y, seq_handler.gc], oriC_middles, ['$x_n$', '$y_n$', '$g_n$'])
     return args
 
 
