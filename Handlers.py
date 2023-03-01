@@ -1,6 +1,6 @@
 import os, shutil, csv, re
 from itertools import combinations, product
-from typing import TextIO, Union, Tuple, Generator
+from typing import TextIO, Union, Generator
 from urllib.error import HTTPError, URLError
 
 import numpy as np
@@ -19,23 +19,40 @@ class FileHandler:
         try:
             return Entrez.efetch(db="nuccore", id=accession, rettype=rettype, retmode="text")
         except HTTPError as BadRequest:
-            (api_message_1, api_message_2) = (f' with API_key \'{api_key}\'', ' and if your API_key if correctly typed and linked to the given email') if api_key is not None else ('', '')
+            if api_key is not None:
+                api_message_1 = f' with API_key \'{api_key}\''
+                api_message_2 = ' and if your API_key is correctly typed and linked to the given email'
+            else :
+                api_message_1, api_message_2 = '', ''
             raise ValueError(f'Unable to fetch accession: \'{accession}\' using \'{email}\'{api_message_1}. Please check if the accession is of an existing chromosomal sequence{api_message_2}.') from BadRequest
         except URLError as NoConnection:
             raise ConnectionError('You are fetching a file from the NCBI servers. Please make sure you have an internet connection to do so.') from NoConnection
 
 
     @staticmethod
-    def read_FASTA(handle: Union[TextIO, str]) -> Tuple[str, Seq.Seq]:
-        """Read a FASTA file and returns the name and sequence of only the first entry in the file"""
-        Seq_records = SeqIO.parse(handle, 'fasta')
-        Seq_obj = next(Seq_records)
-        return Seq_obj.id, Seq_obj.seq
+    def parse_SeqRecord(record: SeqIO.SeqRecord, genes_of_interest: list[str]) -> dict:
+        """Extracts the sequence and positions of the genes of interest from a SeqRecord."""
+        seq_dict = dict()
+        accession, version = tuple(record.id.split('.'))
+        seq_dict.update({'accession': accession})
+        seq_dict.update({'version': int(version)})
+        seq_dict.update({'seq': record.seq})
+
+        for feature in record.features:
+            # is this feature a coding sequence and a gene and is its name something we are looking for?
+            if feature.type == 'CDS' and 'gene' in feature.qualifiers and feature.qualifiers['gene'][0] in genes_of_interest:
+                seq_dict.update({feature.qualifiers['gene'][0] : feature.location})
+            # just in case this SeqRecord has an annotated oriC!
+            if feature.type == 'rep_origin':
+                seq_dict.update({'NCBI_oriC': feature.location})
+        return seq_dict
 
 
     @staticmethod
-    def read_gene_info(handle: TextIO, genes_list: list[str]) -> dict:
+    def _read_gene_info(handle: TextIO, genes_list: list[str]) -> dict:
         """
+        OBSOLETED: use GenBank files and parse_SeqRecord().
+
         Read FASTA-file acquired with rettype='fasta_cds_na'. `genes_list` is a list of names of genes to extract.\n
         Return:
         - The features of the genes in the `genes_list`.
@@ -56,7 +73,7 @@ class FileHandler:
 
 
     @staticmethod
-    def move_fastas(db_loc, on_cluster=True, split=4):
+    def _move_fastas(db_loc, on_cluster=True, split=4):
         '''
         Split one folder into 'split' amount of folders with roughly the same amount of files in them.
         Can be used for easier parallel processing. Instead of one big job with 4000 samples. Run 4 jobs with 1000 samples at the same time.
@@ -411,7 +428,7 @@ class GeneHandler:
             gene_handle = FileHandler.fetch_file(args['accession'], args['email'], args['api_key'], 'fasta_cds_na')
         else:
             gene_handle = args['genes_fasta']
-        self.genes_dict = FileHandler.read_gene_info(gene_handle, args['genes_of_interest'])
+        self.genes_dict = FileHandler._read_gene_info(gene_handle, args['genes_of_interest'])
         self.length = args['length']
     
 
