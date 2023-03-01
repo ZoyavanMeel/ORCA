@@ -18,7 +18,7 @@ MODEL   = joblib.load('Machine_Learning/exp_train_model.pkl')
 # Cluster path
 sys.path.append('../OriC_Finder/')
 
-from ORCA import find_oriCs
+from ORCA_1 import find_oriCs
 
 def prep_prediction(accession, email, api_key, model, csv_path, max_oriCs):
 
