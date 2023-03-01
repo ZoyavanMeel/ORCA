@@ -1,3 +1,5 @@
+READ_ME is out of date, ORCA is currently being updated :D
+
 # ORCA
 Python scripts that predict and plot the location of the origin of replication (*oriC*) of circular bacterial genomes based on Z-curve, GC-skew, *dnaA*-box, and gene location analyses. This README will not explain all of ORCA's methods, those can be read in `ORCA.pdf`. All functions, main or helper, are labelled with docs-strings and type-hinting for ease-of-use. Most functions in ORCA can be used seperately as well. For example, `calc_disparities` in `ORCA.py` can be used outside of ORCA, too. As well as all functions for fetching files from NCBI, or plotter functions, etc.
 
