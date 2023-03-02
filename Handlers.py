@@ -1,4 +1,4 @@
-import os, shutil, csv, re
+import os, csv, re, pickle
 from itertools import combinations, product
 from typing import TextIO, Union, Generator
 from urllib.error import HTTPError, URLError
@@ -49,75 +49,70 @@ class FileHandler:
 
 
     @staticmethod
-    def _read_gene_info(handle: TextIO, genes_list: list[str]) -> dict:
-        """
-        OBSOLETED: use GenBank files and parse_SeqRecord().
-
-        Read FASTA-file acquired with rettype='fasta_cds_na'. `genes_list` is a list of names of genes to extract.\n
-        Return:
-        - The features of the genes in the `genes_list`.
-        - Total number of genes in the `handle`.
-        """
-
-        obj = SeqIO.parse(handle, 'fasta')
-        genes = [gene.lower() for gene in genes_list]
-        genes_dict = {}
-        for gene in obj:
-            features = [x.split('=') for x in re.findall(r"\[(.*?)\]", gene.description) if '=' in x]
-            feature_dict = {feature[0] : feature[1] for feature in features}
-            try: gene_name = feature_dict.pop('gene')
-            except KeyError: continue # be careful about trying to get an alternative name
-            if gene_name.lower() in genes:
-                genes_dict.update({gene_name : feature_dict})
-        return genes_dict
+    def save_gbk(accession: str, email: str, output_folder: str, api_key: str = None):
+        '''
+        Download the GenBank file of a given accession and save it into the output_folder.
+        Name of the file will be: `{accession}_{version}.gbk`.
+        Raises a `FileExistsError` if a file with the generated name already exists in the output folder.
+        If version is not provided in the accession, then the function downloads the latest version.
+        '''
+        with FileHandler.fetch_file(accession, email, api_key, rettype="gbwithparts") as fh:
+            # Quick search for the version of the accession that was downloaded.
+            _acc, version = FileHandler.get_accession_from_gbk(fh)
+            
+            # Check if a file with the same name already exists
+            if any(file.startswith(_acc + '_' + version + '.gbk') for file in os.listdir(output_folder)):
+                fh.close()
+                raise FileExistsError(f'\'{_acc}_{version}.gbk\' already exists in: {output_folder}')
+            
+            # Save contents to path
+            file_path = os.path.join(output_folder, _acc + '_' + version + '.gbk')
+            with open(file_path, 'w') as oh:
+                oh.write(fh.read())
+                oh.close()
+            fh.close()
 
 
     @staticmethod
-    def _move_fastas(db_loc, on_cluster=True, split=4):
+    def save_pkl(accession: str, email: str, output_folder: str, api_key: str = None):
         '''
-        Split one folder into 'split' amount of folders with roughly the same amount of files in them.
-        Can be used for easier parallel processing. Instead of one big job with 4000 samples. Run 4 jobs with 1000 samples at the same time.
+        Download the GenBank file of a given accession, parses it with Biopython into a SeqRecord, and save it into the output_folder.
+        Name of the file will be: `{accession}_{version}.pkl`.
+        Raises a `FileExistsError` if a file with the generated name already exists in the output folder.
+        If version is not provided in the accession, then the function downloads the latest version.
         '''
-        if on_cluster:
-            path = db_loc + '/bacteria'
-            samples = os.listdir(path)
-        else:
-            path = db_loc + '/chromosomes_only'
-            samples = os.listdir(path)
-
-        samples_per_split = len(samples)//split
-        for i in range(split):
-            new_folder = db_loc + '/' + str(i)
-            os.mkdir(new_folder)
-            start = 0 + i*samples_per_split
-            stop  = (i+1)*samples_per_split if i != split-1 else None
-            for sample in samples[start:stop]:
-                shutil.move(path + '/' + sample, new_folder + '/' + sample)
+        with FileHandler.fetch_file(accession, email, api_key, rettype="gbwithparts") as fh:
+            # Quick search for the version of the accession that was downloaded.
+            _acc, version = FileHandler.get_accession_from_gbk(fh)
+            
+            # Check if a file with the same name already exists
+            if any(file.startswith(_acc + '_' + version + '.pkl') for file in os.listdir(output_folder)):
+                fh.close()
+                raise FileExistsError(f'\'{_acc}_{version}.pkl\' already exists in: {output_folder}')
+            
+            # Parse gbk file
+            seq_rec = SeqIO.read(fh, 'gb')
+            
+            # Save contents to path
+            file_path = os.path.join(output_folder, _acc + '_' + version + '.pkl')
+            with open(file_path, 'w') as oh:
+                pickle.dump(seq_rec, oh)
+                oh.close()
+            fh.close()
 
 
     @staticmethod
-    def download(accession: str, output_folder: str, email: str = None, api_key: str = None):
-        '''Download the proper file types for large dataset analysis into the output_folder.'''
-        Entrez.email = email
-        if api_key is not None:
-            Entrez.api_key = api_key
-
-        if not os.path.exists(output_folder + f'/gene_info_files/{accession}.fasta'):
-            check_handle = Entrez.efetch(db='nuccore', id=accession, rettype='gb', retmode='text')
-            annotations = next(SeqIO.parse(check_handle, 'genbank').records).annotations
-            if annotations['taxonomy'][0].lower() == 'bacteria' and annotations['topology'].lower() == 'circular':
-                handle = Entrez.efetch(db="nuccore", id=accession, rettype="fasta_cds_na", retmode="text")
-                with open(output_folder + f'/gene_info_files/{accession}.fasta', 'w') as fh:
-                    lines = handle.read()
-                    fh.write(lines)
-                    handle.close()
-                    fh.close()
-                handle = Entrez.efetch(db="nuccore", id=accession, rettype="fasta", retmode="text")
-                with open(output_folder + f'/bacteria/{accession}.fasta', 'w') as fh:
-                    lines = handle.read()
-                    fh.write(lines)
-                    handle.close()
-                    fh.close()
+    def get_accession_from_gbk(fh: TextIO) -> tuple[str, str]:
+        """Reads the accession and version number from an open GenBank file."""
+        acc_v = "."
+        for line in fh:
+            # Always appears around the top of the file.
+            if "VERSION" in line:
+                acc_v = [x for x in line.strip("\n").split(" ")][-1]
+                break
+        # Reset read to top of file.
+        fh.seek(0)
+        return tuple(acc_v.split("."))
 
 
     @staticmethod
@@ -125,12 +120,12 @@ class FileHandler:
         '''
         Merge multiple csvs into one csv.
         Arguments:
-            file_folder : path to folder with csvs that have to be merged
-            merged_csv  : name of the merged csv
-            fieldnames  : list of fieldnames for the merged_csv
-            length      : amount of rows in each single csv. -1, if the length of each single
+        - file_folder : path to folder with csvs that have to be merged
+        - merged_csv  : name of the merged csv
+        - fieldnames  : list of fieldnames for the merged_csv
+        - length      : amount of rows in each single csv. -1, if the length of each single
                         csv is not known or not the same.
-            headers     : if the single csvs have headers or not
+        - headers     : if the single csvs have headers or not
         '''
         file_list = os.listdir(file_folder)
         with open(merged_csv, 'w', newline='') as fh_out:
