@@ -33,6 +33,11 @@ class Peak():
         self.three_side = three_side
 
 
+    @classmethod
+    def from_edges(cls, five_side, three_side, seq_len, window_size):
+        return cls( cls.get_middle(five_side, three_side, seq_len), seq_len, window_size )
+
+
     @staticmethod
     def calc_dist( a: int, b: int, curve_size: int) -> int:
         '''Calculate the distance of self to other in bp'''
@@ -197,7 +202,24 @@ class Peak():
         return self.window_size // 2 >= Peak.calc_dist(self.middle, p, self.seq_len)
 
 
-    # Undefined __eq__ to remain hashable; only added the dunders I needed
+    def __hash__(self) -> int:
+        '''very simple hash function. Does not include scores'''
+        return hash(
+            (self.middle, self.seq_len, self.window_size, self.split,
+            self.five_side, self.three_side)
+        )
+    
+    def __eq__(self, other: "Peak") -> bool:
+        '''Simple equality check. Is not used in __lt__ and __gt__'''
+        if not isinstance(other, Peak):
+            return False
+        return self.middle == other.middle \
+            and self.seq_len == other.seq_len \
+            and self.window_size == other.window_size \
+            and self.split == other.split \
+            and self.five_side == other.five_side \
+            and self.three_side == other.three_side
+
     def __repr__(self):
         return f'Peak(middle={self.middle}, window_size={self.window_size})'
 
