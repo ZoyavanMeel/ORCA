@@ -3,8 +3,6 @@ import sys, os, pickle, io
 import unittest as ut
 import unittest.mock as m
 
-from Bio.SeqFeature import SimpleLocation
-
 sys.path.insert(0,'..')
 os.chdir( os.path.dirname( os.path.abspath(__file__) ) )
 
@@ -23,17 +21,20 @@ class TestFileHandler(ut.TestCase):
         self.seq_rec = seq_rec
         self.genes = ['dnaA', 'dnaN']
 
-        dnaN = SimpleLocation(3881220, 3882321, -1)
-        dnaA = SimpleLocation(3882325, 3883729, -1)
-        oriC = SimpleLocation(3925743, 3925975, +1)
+        dnaA = Peak.from_edges(3882325, 3883729, 4641652, 0)
+        dnaN = Peak.from_edges(3881220, 3882321, 4641652, 0)
+        oriC = Peak.from_edges(3925743, 3925975, 4641652, 0)
 
         self.seq_dict = {
             'accession': 'NC_000913',
             'version': 3,
             'seq': seq_rec.seq,
-            'dnaA': dnaA,
-            'dnaN': dnaN,
-            'NCBI_oriC': oriC
+            'gene_locations': [
+                ('dnaN', dnaN),
+                ('dnaA', dnaA)
+            ],
+            'NCBI_oriC': [('oriC', oriC)],
+            'seq_len': 4641652
         }
 
         self.text_io = io.StringIO("""LOCUS       NC_000913            4641652 bp    DNA     circular CON 09-MAR-2022
@@ -113,14 +114,13 @@ class TestFileHandler(ut.TestCase):
 
     def test_parse_SeqRecord_2_good(self):
         res = FileHandler.parse_SeqRecord(self.seq_rec, ['dnaA'])
-        self.seq_dict.pop('dnaN')
+        self.seq_dict['gene_locations'].pop(0)
         self.assertEqual(res, self.seq_dict)
 
 
     def test_parse_SeqRecord_3_good(self):
         res = FileHandler.parse_SeqRecord(self.seq_rec, [])
-        self.seq_dict.pop('dnaN')
-        self.seq_dict.pop('dnaA')
+        self.seq_dict['gene_locations'] = []
         self.assertEqual(res, self.seq_dict)
 
 

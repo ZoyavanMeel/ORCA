@@ -1,11 +1,11 @@
-import os, csv, re, pickle
-from itertools import combinations, product
-from typing import TextIO, Union, Generator
+import os, csv, pickle
+from itertools import combinations
+from typing import TextIO, Union
 from urllib.error import HTTPError, URLError
 
 import numpy as np
 from scipy.signal import find_peaks
-from Bio import Seq, SeqIO, Entrez
+from Bio import SeqIO, Entrez
 
 from Peak import Peak
 
@@ -37,14 +37,19 @@ class FileHandler:
         seq_dict.update({'accession': accession})
         seq_dict.update({'version': int(version)})
         seq_dict.update({'seq': record.seq})
+        seq_dict.update({'seq_len': len(record.seq)})
+        seq_dict.update({'gene_locations': []})
+        seq_dict.update({'NCBI_oriC': []})
 
         for feature in record.features:
             # is this feature a coding sequence and a gene and is its name something we are looking for?
             if feature.type == 'CDS' and 'gene' in feature.qualifiers and feature.qualifiers['gene'][0] in genes_of_interest:
-                seq_dict.update({feature.qualifiers['gene'][0] : feature.location})
+                gene_loc = Peak.from_edges(int(feature.location.start), int(feature.location.end), len(record.seq), 0)
+                seq_dict['gene_locations'].append( (feature.qualifiers['gene'][0], gene_loc) )
             # just in case this SeqRecord has an annotated oriC!
             if feature.type == 'rep_origin':
-                seq_dict.update({'NCBI_oriC': feature.location})
+                oriC = Peak.from_edges(int(feature.location.start), int(feature.location.end), len(record.seq), 0)
+                seq_dict['NCBI_oriC'].append( ('oriC', oriC) )
         return seq_dict
 
 
@@ -144,153 +149,33 @@ class FileHandler:
 
 
 
-class SequenceHandler:
-    '''
-    Sequence attributes:
-    - `length` : length of the sequence
-    - `gc_conc` : (G-count + C-count) / length
-    - `pot__boxes` : list of all *possible* DnaA binding sites
-    - `x`, `y`, `z` : all components of the Z-curve obtained from the sequence as `Curve` objects
-    - `gc` : GC-skew of the sequence
-    - `dnaa_dict` : dictionary of all DnaA-boxes actually in the sequence
+class CurveHandler:
+    """Static class for handing and processing disparity curves"""
+    @staticmethod
+    def process_curve(curve: np.ndarray, mode: str, window_size: int) -> list:
+        '''Runs the given 1D-array (curve) through all processing functions for oriC identification. Returns its peaks'''
+        init_peaks = [Peak(peak, curve.shape[0], window_size) for peak in CurveHandler.detect_peaks(curve)]
+        accepted_peaks = CurveHandler.filter_peaks(curve, mode, init_peaks)
+        peaks_to_merge = Peak.get_peaks_to_merge(accepted_peaks)
+
+        single_peaks = [x for x in accepted_peaks if not any(x in y for y in peaks_to_merge)]
+        # merged_peaks = [Peak(to_merge[0].get_middle(to_merge[1]), curve.shape[0], window_size) for to_merge in peaks_to_merge]
+        merged_peaks = [Peak.from_edges(to_merge[0], to_merge[1], curve.shape[0], window_size) for to_merge in peaks_to_merge]
+        return single_peaks + merged_peaks
     
-    The DNA sequence string itself is not saved.
-    '''
-    def __init__(self, args: dict):
-        # Sequence fetching and reading
-        if args['genome_fasta'] is None:
-            seq_handle = FileHandler.fetch_file(args['accession'], args['email'], args['api_key'], 'fasta')
-        else:
-            seq_handle = args['genome_fasta']
-        args['accession'], sequence = FileHandler.read_FASTA(seq_handle)
 
-        self.length  = len(sequence)
-        self.windows = args['windows']
-        self.gc_conc = ( sequence.count('G') + sequence.count('C') ) / self.length
-        self.max_group_spread = args['max_group_spread']
-
-        # Parsing sequence properties
-        self.pot_boxes = self.get_dnaa_boxes(box_list=args['dnaa_boxes'], max_mismatches=args['max_mismatches'])
-        self.calc_disparities(str(sequence))
-
-
-    def calc_disparities(self, seq: str):
-        '''
-        Z-curve and GC-skew calculation and k-mer indexing. In one function so only one iteration of the sequence is necessary.\n
-        Parameters:
-            `seq`        : string DNA sequence
-            `k`          : length of k-mer. Should be same length as every dnaa-box
-            `dnaa_boxes` : set of dnaa-box regions.\n
-        Return:
-            `x`, `y`, `z`, `gc` : 1D-np.arrays of the three Z-curve components and 1D-np.array of the GC-skew
-            `dnaa_dict`         : Dictionary of starting indexes of dnaa-boxes in `seq`
-        '''
-        k = len(self.pot_boxes[0])
-        x, y, z, gc = [], [], [], []
-        a, c, t, g  = 0, 0, 0, 0
-
-        raw_dict = {}
-        seq_len  = len(seq)
-
-        for i in range(seq_len):
-            base = seq[i]
-            if base == "A": a +=1
-            elif base == "C": c +=1
-            elif base == "G": g +=1
-            elif base == "T": t +=1
-
-            gc.append(g - c)
-            x.append( (a + g) - (c + t) ) # Purine vs Pyrimidine
-            y.append( (a + c) - (g + t) ) # Amino vs Keto
-            z.append( (a + t) - (c + g) ) # Weak vs Strong Hydrogen Bonds
-
-            kmer = seq[i:i+k] if i <= seq_len - k else seq[i:] + seq[:k-(seq_len-i)]
-            if kmer in self.pot_boxes:
-                mid = i+k//2+1 if i+k//2+1 <= seq_len else i+k//2+1 - seq_len
-                try: raw_dict[kmer].append(mid)
-                except KeyError: raw_dict[kmer] = [mid]
-
-        (self.x, self.y, self.z, self.gc, self.dnaa_dict) = (np.asarray(x), np.asarray(y), np.asarray(z), np.asarray(gc), raw_dict)
-
-
-    def analyse_Z_curve(self) -> list[Peak]:
-        '''Analyse the three disparity curves related to finding the oriC of the sequence.'''        
-        peaks = []
-        for fraction in self.windows:
-            window_size = int(self.length * fraction)
-            peaks_x  = SequenceHandler.process_array(self.x, 'min', window_size=window_size)
-            peaks_y  = SequenceHandler.process_array(self.y, 'max', window_size=window_size)
-            peaks_gc = SequenceHandler.process_array(self.gc, 'min', window_size=window_size)
-            peaks.extend( [j for i in self.curve_combinations( (peaks_x, peaks_y, peaks_gc) ) for j in i] )
-        return peaks
-
-
-    def __merge_oriCs(self, groups: list) -> tuple[list[Peak], list[int]]:
-        '''Finds the average index of a group and returns those values. groups is a nested-list'''
-        mutable = sorted( groups, key=lambda x:len(x), reverse=True )
-        total_pot_oriCs = len( [y for x in mutable for y in x] )
-        oriCs, Z_scores = [], []
-        window_size = int(self.length*self.windows[-1])
-
-        group: list[Peak]
-        for group in mutable:
-            group.sort()
-            for i in range(len(group)):
-                if (group[-1] - group[i]).middle >= (self.length-1)/2:
-                    group[i].middle += self.length-1
-            avg_val = sum(group)//len(group)
-            if avg_val > self.length-1:
-                avg_val -= self.length-1
-            oriCs.append(Peak(avg_val, self.length, window_size))
-            Z_scores.append(len(group)/total_pot_oriCs)
-        return oriCs, Z_scores
-
-
-    def calculate_Z_scores(self, peaks: list[Peak]) -> tuple[list[Peak], list[int]]:
-        ## Finding connected components in undirected graph with a depth-first search to merge Z-curve oriCs
-        matrix_pot_oriCs = Peak.get_adjacency_matrix(peaks)
-        connected_groups = Peak.get_connected_groups(peaks, matrix_pot_oriCs, int(self.length*self.max_group_spread))
-        return self.__merge_oriCs(connected_groups)
-
-
-    def calculate_D_scores(self, peaks: list[Peak]) -> list[Peak]:
-        '''Process the location of dnaa_boxes and rank potential oriCs based on most surrounding dnaa_boxes.'''
-        if len(self.dnaa_dict.keys()) != 0:
-            contains_boxes = []
-            all_pos = [pos for pos_list in self.dnaa_dict.values() for pos in pos_list]
-            for oriC in peaks:
-                count = 0
-                for pos in all_pos:
-                    if oriC.contains_point(pos):
-                        count += 1
-                contains_boxes.append(count)
-            return [x/sum(contains_boxes) if sum(contains_boxes) != 0 else 0 for x in contains_boxes], False
-        else:
-            return [0] * len(peaks), True
-
-
-    def curve_combinations(self, peaks_list: tuple[list["Peak"]]) -> list:
+    @staticmethod
+    def curve_combinations(peaks_list: tuple[list["Peak"]], seq_len: int) -> list:
         '''Get every matched_peaks combination for x, y, and gc.'''
         oriC_locations_list = []
         for peaks_i, peaks_j in combinations(peaks_list, 2):
             matched_peaks  = Peak.match_peaks(peaks_i, peaks_j)
             oriC_locations_list.append(
-                [Peak( Peak.get_middle(matches[0], matches[1]), self.length, peaks_list[0][0].window_size ) for matches in matched_peaks]
+                # Peak( Peak.get_middle(matches[0], matches[1]), seq_len, peaks_list[0][0].window_size
+                [Peak.from_edges(matches[0], matches[1], seq_len, peaks_list[0][0].window_size ) for matches in matched_peaks]
             )
         return oriC_locations_list
 
-
-    @staticmethod
-    def process_array(curve: np.ndarray, mode: str, window_size: int) -> list:
-        '''Runs the given 1D-array (curve) through all processing functions for oriC identification. Returns its peaks'''
-        init_peaks = [Peak(peak, curve.shape[0], window_size) for peak in SequenceHandler.detect_peaks(curve)]
-        accepted_peaks = SequenceHandler.filter_peaks(curve, mode, init_peaks)
-        peaks_to_merge = Peak.get_peaks_to_merge(accepted_peaks)
-
-        single_peaks = [x for x in accepted_peaks if not any(x in y for y in peaks_to_merge)]
-        merged_peaks = [Peak(to_merge[0].get_middle(to_merge[1]), curve.shape[0], window_size) for to_merge in peaks_to_merge]
-        return single_peaks + merged_peaks
-    
 
     @staticmethod
     def detect_peaks(curve: np.ndarray) -> np.ndarray:
@@ -343,169 +228,3 @@ class SequenceHandler:
         rejected_peaks = set(rejected_peaks)
         accepted_peaks = [x for x in peaks if x not in rejected_peaks]
         return accepted_peaks
-
-
-    @staticmethod
-    def get_dnaa_boxes(box_list: list, max_mismatches: int = 2) -> list:
-        """
-        Standard parameters: Get all unique dnaa-box 9-mers and reverse complements that allow for 0, 1, or 2 mismatches.
-        Sources as comments in function. Check source code for more suggested consensus boxes.
-
-        Parameters:
-        - `box_list`       : list with strings of dnaa-boxes to use. Make sure all given boxes are 9 bases long.
-        - `max_mismatches` : maximum allowed mismatches in dnaa-box that is still seen as an accepted dnaa-box.
-            E.g. 2 allows all kmers that have 0, 1 or 2 mismatches with the dnaa-box.\n
-        Return:
-            `dnaa_boxes`   : set of 9-mers matching the given parameters.
-        
-        ------------------------------------------------------------
-        Useful acticles about DnaA(-boxes):
-        - https://doi.org/10.1101/cshperspect.a012922
-        - https://doi.org/10.1093/nar/gkr832
-        - https://doi.org/10.3389/fmicb.2018.00319
-        - https://doi.org/10.1046/j.1365-2958.1996.6481362.x.
-
-        ------------------------------------------------------------
-        """
-
-        #             Sequences                       DOI                                            Year  Notes
-        consensus_1 = ['TTAT(A|C)CA(A|C)A']         # https://doi.org/10.1016/0092-8674(84)90284-8  (1984) The first consensus
-        consensus_2 = ['TGTG(G|T)ATAAC']            # https://doi.org/10.1016/0022-2836(85)90299-2  (1985) Matsui-box
-        consensus_3 = ['TTAT(A|T|C|G)CACA']         # https://doi.org/10.1093/dnares/dsm017         (2007) In (roughly) all eubacteria, not just B. subtilis
-        consensus_4 = [                             # https://doi.org/10.1093/emboj/16.21.6574      (1997) Affinity study
-            'TTATCCACA', 'TTTTCCACA', 'TTATCAACA',
-            'TCATTCACA', 'TTATACACA', 'TTATCCAAA'
-        ]
-        consensus_5 = [                             # https://doi.org/10.1007/BF00273584            (1991) Only in E. coli K12. Do not use.
-            '(T|C)(T|C)(A|T|C)T(A|C)C(A|G)(A|C|T)(A|C)'
-        ]
-
-        def generate_mismatched_strings(string: str, mismatches: int = 2) -> Generator:
-            string_len = len(string)
-            letters = 'ACGT'
-
-            for indices in combinations(range(string_len), mismatches):
-                for replacements in product(letters, repeat=mismatches):
-                    skip = False
-                    for i, a in zip(indices, replacements):
-                        if string[i] == a:
-                            skip = True
-                    if skip:
-                        continue
-
-                    keys = dict(zip(indices, replacements))
-                    yield ''.join([string[i] if i not in indices else keys[i] for i in range(string_len)])
-
-        # Get all dnaa-boxes as strings
-        boxes = box_list.copy()
-        for box in box_list:
-            if re.search(r'[^ATCG]', box) is not None:
-                raise ValueError(f'\n\tInput string: \'{box}\' contains forbidden characters. Only use the four nucleotide bases: A, T, C, and G.')
-            if len(box) != 9:
-                raise ValueError(f'Input string \'{box}\' not of length 9.')
-            # Also check reverse complement for box on other strand
-            boxes.append(str(Seq.Seq(box).reverse_complement()))
-
-        # Get all unique strings while allowing for max. 2 mismatches.
-        mismatch_boxes = list(set(boxes))
-        for box in boxes:
-            for i in range(abs(max_mismatches)):
-                mismatch_boxes.extend(list(generate_mismatched_strings(box, i+1)))
-        return mismatch_boxes
-
-
-
-class GeneHandler:
-    def __init__(self, args: dict):
-
-        # Gene info fetching and reading
-        if args['genes_fasta'] is None:
-            gene_handle = FileHandler.fetch_file(args['accession'], args['email'], args['api_key'], 'fasta_cds_na')
-        else:
-            gene_handle = args['genes_fasta']
-        self.genes_dict = FileHandler._read_gene_info(gene_handle, args['genes_of_interest'])
-        self.length = args['length']
-    
-
-    def analyse_gene_locations(self, oriCs: list[Peak]) -> list[Peak]:
-        """Returns list of Peaks of the middle position of every gene in the dictionary. `genes_dict` is assumed to be in the format provided by `read_gene_info()`."""
-        locations = []
-        if len(self.genes_dict.keys()) == 0:
-            return locations
-        for gene_dict in self.genes_dict.values():
-            clean_locs = GeneHandler.handle_location(gene_dict['location'], self.length)
-            locations.extend(clean_locs)
-        middles = [Peak(Peak.get_middle(loc[0], loc[1], self.length), self.length, 0) for loc in locations]
-        return middles
-    
-
-    @staticmethod
-    def calculate_G_scores(peaks: list[Peak], gene_locations: list[Peak]) -> tuple[list[int], bool]:
-        '''Process the location of the genes of interest and rank the potential oriCs based on how close they are to these genes'''
-        # LOOK INTO THIS: what if all genes of interest are far apart?
-        if len(gene_locations) == 0:
-            return [0] * len(peaks), True
-        matrix = Peak.get_adjacency_matrix(peaks, gene_locations)
-        if np.min(matrix) == np.max(matrix):
-            return [1] * matrix.shape[1]
-        norm_mat = (matrix - np.min(matrix)) / (np.max(matrix) - np.min(matrix))
-        return [1 - x for x in np.mean(norm_mat, axis=1)], False
-
-
-    @staticmethod
-    def handle_location(location: str, seq_len: int) -> list:
-        """
-        Gene locations come in a billion flavours due to different annotation options. This function handles the vast majority of cases.
-        Biopython can parse all location formats (AFAIK), but I can't find how to access their parsers, since they're hidden/private in some of the classes
-        """
-        handled = []
-        if re.search(r'[^joincmplemt<>,\s\d\(\)\.]', location) is not None:
-            # LOOK INTO THIS.
-            raise ValueError("Location format not supported: " + location)
-        loc_groups = GeneHandler.split_location(location)
-        for loc_lst in loc_groups:
-            if len(loc_lst) == 1:
-                loc_coords = re.findall(r'\d+', loc_lst[0])
-                if len(loc_coords) == 0:
-                    return None
-                if len(loc_coords) == 1:
-                    loc_coords.append(loc_coords[0])
-                loc_coords = [int(x) for x in loc_coords]
-                handled.append(loc_coords)
-            else: # len(i) > 1
-                all_nums = [int(y) for x in loc_lst for y in re.findall(r'\d+', x)]
-                relevant_idxes = np.unravel_index(Peak.get_adjacency_matrix(all_nums, seq_len=seq_len).argmax(), (len(all_nums), len(all_nums)))
-                first, second = min(all_nums[relevant_idxes[0]], all_nums[relevant_idxes[1]]), max(all_nums[relevant_idxes[0]], all_nums[relevant_idxes[1]])
-                handled.append( [first, second] )
-        return handled
-
-
-    @staticmethod
-    def split_location(location: str) -> list[str]:
-        """
-        Splits a `location` string into its location groups.
-
-        (Extreme) e.g.:
-        - `location = 'join(complement(1..>2),3..4,<5..6,500),100..200,join(500..600,complement(0..4))'`\n
-        returns:
-        - `[['1..>2', '3..4', '5..6', '500'], ['100..200'], ['500..600', '0..4']]`
-        """
-        raw_locs = re.split(r',\s?', location)
-        locs = []
-        done, i = False, 0
-        while not done: # join(...) groups suck
-            if i > len(raw_locs) - 1:
-                break
-            if raw_locs[i].count('(') != raw_locs[i].count(')'):
-                group_done, j = False, i+1
-                while not group_done:
-                    if j > len(raw_locs) - 1:
-                        break
-                    (group_done, j) = (True, j) if raw_locs[j].count('(') != raw_locs[j].count(')') else (False, j+1)
-                locs.append( ','.join([raw_locs[x] for x in range(i, j+1)]) )
-                i = j+1
-            else:
-                locs.append(raw_locs[i])
-                i += 1
-        locs = [re.findall(r'\d+(?:\.\.[<>]?\d+)?', entry) for entry in locs]
-        return locs
