@@ -34,15 +34,25 @@ class Peak():
 
 
     @classmethod
-    def from_edges(cls, five_side, three_side, seq_len, window_size):
+    def from_calc_middle(cls, five_side, three_side, seq_len, window_size):
+        '''Calculates the middle of five_side and three_side and uses that as the middle'''
         return cls( cls.get_middle(five_side, three_side, seq_len), seq_len, window_size )
+    
+
+    @classmethod
+    def from_edges(cls, five_side, three_side, seq_len):
+        '''
+        Calculates the middle of five_side and three_side and uses that as the middle 
+        AND uses these edges to determine the window_size.
+        '''
+        return cls( cls.get_middle(five_side, three_side, seq_len), seq_len, cls.calc_dist(five_side, three_side, seq_len) )
 
 
     @staticmethod
     def calc_dist( a: int, b: int, curve_size: int) -> int:
         '''Calculate the distance of self to other in bp'''
         dist_1 = max(a, b) - min(a, b)
-        dist_2 = min(a, b) + curve_size-1 - max(a, b)
+        dist_2 = min(a, b) + curve_size - max(a, b)
         return min(dist_1, dist_2)
 
 
@@ -182,18 +192,27 @@ class Peak():
 
 
     def intersecting_windows(self, other: "Peak") -> bool:
-        '''T|F wether self's window intersects with other's window'''
+        '''T|F wether self's window intersects with other's window.'''
+
+        # def intersecting_windows(self, other: "Peak") -> bool:
+        #     '''T|F wether self's window intersects with other's window'''
+        #     if not isinstance(other, Peak):
+        #         raise ValueError(f'other is a {type(other)}, must be a Peak object')
+        #     # f = five_side, t = three_side
+        #     f_t = Peak.calc_dist(self.five_side, other.three_side, self.seq_len)
+        #     t_f = Peak.calc_dist(self.three_side, other.five_side, self.seq_len)
+        #     f_f = Peak.calc_dist(self.five_side, other.five_side, self.seq_len)
+        #     t_t = Peak.calc_dist(self.three_side, other.three_side, self.seq_len)
+
+        #     a = f_t <= self.window_size // 2 or t_f <= self.window_size // 2
+        #     b = f_f <= self.window_size // 2 and t_t <= self.window_size // 2
+        #     return a or b
+
         if not isinstance(other, Peak):
             raise ValueError(f'other is a {type(other)}, must be a Peak object')
-        # f = five_side, t = three_side
-        f_t = Peak.calc_dist(self.five_side, other.three_side, self.seq_len)
-        t_f = Peak.calc_dist(self.three_side, other.five_side, self.seq_len)
-        f_f = Peak.calc_dist(self.five_side, other.five_side, self.seq_len)
-        t_t = Peak.calc_dist(self.three_side, other.three_side, self.seq_len)
-
-        a = f_t <= self.window_size // 2 or t_f <= self.window_size // 2
-        b = f_f <= self.window_size // 2 and t_t <= self.window_size // 2
-        return a or b
+        x = Peak.calc_dist(self.middle, other.middle, self.seq_len)
+        y = self.window_size//2 + other.window_size//2
+        return x < y
 
 
     def contains_point(self, point: Union[int, "Peak"]) -> bool:
