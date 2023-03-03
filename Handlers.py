@@ -44,11 +44,11 @@ class FileHandler:
         for feature in record.features:
             # is this feature a coding sequence and a gene and is its name something we are looking for?
             if feature.type == 'CDS' and 'gene' in feature.qualifiers and feature.qualifiers['gene'][0] in genes_of_interest:
-                gene_loc = Peak.from_edges(int(feature.location.start), int(feature.location.end), len(record.seq), 0)
+                gene_loc = Peak.from_calc_middle(int(feature.location.start), int(feature.location.end), len(record.seq), 0)
                 seq_dict['gene_locations'].append( (feature.qualifiers['gene'][0], gene_loc) )
             # just in case this SeqRecord has an annotated oriC!
             if feature.type == 'rep_origin':
-                oriC = Peak.from_edges(int(feature.location.start), int(feature.location.end), len(record.seq), 0)
+                oriC = Peak.from_calc_middle(int(feature.location.start), int(feature.location.end), len(record.seq), 0)
                 seq_dict['NCBI_oriC'].append( ('oriC', oriC) )
         return seq_dict
 
@@ -160,7 +160,7 @@ class CurveHandler:
 
         single_peaks = [x for x in accepted_peaks if not any(x in y for y in peaks_to_merge)]
         # merged_peaks = [Peak(to_merge[0].get_middle(to_merge[1]), curve.shape[0], window_size) for to_merge in peaks_to_merge]
-        merged_peaks = [Peak.from_edges(to_merge[0], to_merge[1], curve.shape[0], window_size) for to_merge in peaks_to_merge]
+        merged_peaks = [Peak.from_calc_middle(to_merge[0], to_merge[1], curve.shape[0], window_size) for to_merge in peaks_to_merge]
         return single_peaks + merged_peaks
     
 
@@ -172,7 +172,7 @@ class CurveHandler:
             matched_peaks  = Peak.match_peaks(peaks_i, peaks_j)
             oriC_locations_list.append(
                 # Peak( Peak.get_middle(matches[0], matches[1]), seq_len, peaks_list[0][0].window_size
-                [Peak.from_edges(matches[0], matches[1], seq_len, peaks_list[0][0].window_size ) for matches in matched_peaks]
+                [Peak.from_calc_middle(matches[0], matches[1], seq_len, peaks_list[0][0].window_size ) for matches in matched_peaks]
             )
         return oriC_locations_list
 
