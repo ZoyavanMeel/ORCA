@@ -209,7 +209,11 @@ class CurveHandler:
                     reject_middle = np.where( curve == min(curve[peak_i.middle], curve[peak_j.middle]) )[0].tolist()
                 elif mode == 'min':
                     reject_middle = np.where( curve == max(curve[peak_i.middle], curve[peak_j.middle]) )[0].tolist()
-                rejected_peaks.append(peak_i) if peak_i.middle in reject_middle else rejected_peaks.append(peak_j)
+
+                if peak_i.middle in reject_middle:
+                    rejected_peaks.append(peak_i)
+                else:
+                    rejected_peaks.append(peak_j)
 
         for peak in peaks:
             # Filter 2: Check if peaks are actually the extreme in their windows
