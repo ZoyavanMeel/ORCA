@@ -21,9 +21,9 @@ class TestFileHandler(ut.TestCase):
         self.seq_rec = seq_rec
         self.genes = ['dnaA', 'dnaN']
 
-        dnaA = Peak.from_edges(3882325, 3883729, 4641652, 0)
-        dnaN = Peak.from_edges(3881220, 3882321, 4641652, 0)
-        oriC = Peak.from_edges(3925743, 3925975, 4641652, 0)
+        dnaA = Peak.from_calc_middle(3882325, 3883729, 4641652, 0)
+        dnaN = Peak.from_calc_middle(3881220, 3882321, 4641652, 0)
+        oriC = Peak.from_calc_middle(3925743, 3925975, 4641652, 0)
 
         self.seq_dict = {
             'accession': 'NC_000913',
