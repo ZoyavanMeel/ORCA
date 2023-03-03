@@ -366,13 +366,13 @@ class ORCA:
             ''')
         G_scores = self.calculate_G_scores(oriCs)
 
-        # Step 4: Machine Learning model decision function.
+        # Step 5: Machine Learning model decision function.
         decisions = [None for i in range(len(oriCs))]
         if self.model is not None:
             decisions = self.model.decision_function(np.asarray([Z_scores, G_scores, D_scores]).T).tolist()
         oriC_middles = [oriC.middle for oriC in oriCs]
 
-        # Step 5: Setting the last variables to the proper values
+        # Step 6: Setting the last variables to the proper values
         for i in range(len(oriCs)):
             oriCs[i].z_score = Z_scores[i]
             oriCs[i].g_score = G_scores[i]
