@@ -11,7 +11,7 @@ from Peak import Peak
 import helper_functions as hf
 import plotter_functions as pf
 
-import ORCA
+from ORCA import ORCA
 
 # Set cwd to location of this script
 os.chdir( os.path.dirname( os.path.abspath(__file__) ) )
@@ -389,11 +389,8 @@ if __name__ == '__main__':
     model = joblib.load('Machine_Learning/75_train_model.pkl')
 
     start = time.perf_counter()
-    orca_dict = ORCA.find_oriCs(
-        accession='NC_000913', # E. coli K-12       #'NC_000117'
-        email=email,
-        model=model
-    )
+    orca = ORCA.from_pkl(path="Test/NC_000913_3.pkl", model=model)
+    orca.find_oriCs(True, False)
     print('new', time.perf_counter() - start)
 
     start = time.perf_counter()
@@ -403,7 +400,7 @@ if __name__ == '__main__':
         api_key=None,
         model=model,
         show_plot=False,
-        show_info=False
+        show_info=True
     )
     print('old', time.perf_counter() - start)
 
