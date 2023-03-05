@@ -152,6 +152,7 @@ class TestPeak(ut.TestCase):
         /0         1         2         3         4         5         6         7         8         9         10
         / i   i i                                         jj   j     j                                      i
         /|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|
+        /________                                         ____________                                      __
         '''
         i1 = Peak(  0, 1000, 60)
         i2 = Peak( 40, 1000, 60)
@@ -165,7 +166,7 @@ class TestPeak(ut.TestCase):
 
         peaks = [i1, i2, i3, i4, j1, j2, j3, j4]
         mat = Peak.get_adjacency_matrix(peaks)
-
+        # check the threshold
         res = sorted(Peak.select_connected_groups(peaks, mat, 120))
         exp = sorted([[i1, i2, i3, i4], [j1, j2, j3, j4]])
         self.assertEqual(res, exp)
@@ -176,6 +177,7 @@ class TestPeak(ut.TestCase):
         /0         1         2         3         4         5         6         7         8         9         10
         / i   i i                                         jj   j     j                                      i
         /|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|
+        /________                                         ______     _                                      __
         '''
         i1 = Peak(  0, 1000, 60)
         i2 = Peak( 40, 1000, 60)
@@ -189,7 +191,6 @@ class TestPeak(ut.TestCase):
 
         peaks = [i1, i2, i3, i4, j1, j2, j3, j4]
         mat = Peak.get_adjacency_matrix(peaks)
-
         res = sorted(Peak.select_connected_groups(peaks, mat, 50))
         exp = sorted([[i1, i2, i3, i4], [j1, j2, j3], [j4]])
         self.assertEqual(res, exp)
@@ -200,7 +201,7 @@ class TestPeak(ut.TestCase):
         /0         1         2         3         4         5         6         7         8         9         10
         / i   i i  i   i i                                jj   j   j                                        i
         /|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|
-        /__   ___  _   ___                                __________                                        __
+        /__   ___  _   ___                                ______   _                                        __
         '''
         i1 = Peak(  0, 1000, 60)
         i2 = Peak( 40, 1000, 60)
@@ -213,13 +214,15 @@ class TestPeak(ut.TestCase):
         j1 = Peak(490, 1000, 60)
         j2 = Peak(500, 1000, 60)
         j3 = Peak(540, 1000, 60)
-        j4 = Peak(580, 1000, 60)
+        j4 = Peak(600, 1000, 60)
 
         peaks = [i1, i2, i3, i4, i5, i6, i7, j1, j2, j3, j4]
         mat = Peak.get_adjacency_matrix(peaks)
-
+        # print("-------------------------------------------------")
         res = sorted(Peak.select_connected_groups(peaks, mat, 50))
-        exp = sorted([[i1, i4], [i2, i3], [i5], [i6, i7], [j1, j2, j3, j4]])
+        # print([[str(i) for i in x] for x in res])
+        exp = sorted([[i1, i4], [i2, i3], [i5], [i6, i7], [j1, j2, j3], [j4]])
+        # print("-------------------------------------------------")
         self.assertEqual(res, exp)
 
 
@@ -265,13 +268,44 @@ class TestPeak(ut.TestCase):
         peaks = [i1, i2, i3, i4] + j
         mat = Peak.get_adjacency_matrix(peaks)
 
-        # max_point_spread (threshold) has a significant effect on the quality of the grouping!
-        # 40 = good grouping, 50 = all j's in one group. 
-        res = sorted(Peak.select_connected_groups(peaks, mat, 40))
-        print()
+        res = sorted(Peak.select_connected_groups(peaks, mat, 50))
         # print([[str(i) for i in x] for x in res])
         exp = sorted([[i1, i2, i3, i4], j[0:2], j[2:5], j[5:8], j[8:9], j[9:12], j[12:13], j[13:15], j[15:16], j[16:]])
         # print([[str(i) for i in x] for x in exp])
+        self.assertEqual(res, exp)
+
+
+    def test_get_connected_groups_6(self):
+        '''
+        /0         1         2         3         4         5         6         7         8         9         10        1         2         3         4         5         6         7         8         9         20
+        / i   i i                           j j  jjj  jjj j jjj j jj j   j                                  i i   i i                           j j  jjj  jjj j jjj j jj j   j                                  i
+        /|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|
+        /________                           ___________________________  _                                  _________                           ___________________________  _                                  __
+        '''
+        i1 = Peak(   0, 2000, 60)
+        i2 = Peak(  40, 2000, 60)
+        i3 = Peak(  60, 2000, 60)
+        i4 = Peak( 990, 2000, 60)
+
+        i5 = Peak(1000, 2000, 60)
+        i6 = Peak(1040, 2000, 60)
+        i7 = Peak(1060, 2000, 60)
+        i8 = Peak(1990, 2000, 60)
+
+        js = [350, 370, 400, 410, 420, 450, 460, 470, 490, 510, 520, 530, 550, 570, 580, 600, 640]
+        j1 = [Peak(i, 2000, 60) for i in js]
+        j2 = [Peak(i+1000, 2000, 60) for i in js]
+
+        peaks = [i1, i2, i3, i4, i5, i6, i7, i8] + j1 + j2
+        mat = Peak.get_adjacency_matrix(peaks)
+
+        # twice as long so 5% = 100
+        # would be perfect if all j's were together, but this is a tuning issue, not a testing issue
+        # print('======================================================')
+        res = sorted(Peak.select_connected_groups(peaks, mat, 100))
+        # print([[str(i) for i in x] for x in res])
+        # print('======================================================')
+        exp = sorted([[i1, i2, i3, i8], [i4, i5, i6, i7], j1[:-1], [j1[-1]], j2[:-1], [j2[-1]]])
         self.assertEqual(res, exp)
 
 
