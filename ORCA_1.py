@@ -320,10 +320,7 @@ def find_oriCs(
 
     ## Finding connected components in undirected graph with a depth-first search to merge Z-curve oriCs
     matrix_pot_oriCs = hf.get_adj_mat(peaks)
-    np.set_printoptions(threshold=np.inf)
-    print(matrix_pot_oriCs)
     connected_groups = hf.get_connected_groups(peaks, matrix_pot_oriCs, int(seq_len*max_group_spread))
-    print(connected_groups)
 
     oriCs, Z_scores = merge_oriCs(seq_len, connected_groups, window_size=int(seq_len*windows[-1]))
 
@@ -398,7 +395,7 @@ if __name__ == '__main__':
 
     start = time.perf_counter()
     properties = find_oriCs(
-        accession= 'NC_000117',#'NC_000913', # E. coli K-12
+        accession= 'NC_000913',#'NC_000117', # E. coli K-12
         email=email,
         api_key=None,
         model=model,
