@@ -15,7 +15,12 @@ import plotter_functions as pf
 
 class ORCA:
     """
-    Private default constructor. Use `from_gbk()`, `from_pkl()`, or `from_accession()` for proper functionality of ORCA.
+    Default constructor. Use of `from_gbk()`, `from_pkl()` or `from_accession()` is preferred.
+
+    Parameters:
+        - `sequence`            : String representation of the DNA (circular) sequence to analyse.
+        - `gene_locations`      : List of tuples in the following format: `[(gene_name, start_position, end_position), ...]`.
+        - `accession`           : Optional, used for naming, else: 'Custom'.
 
     Accepted **kwargs:
         - `dnaa_boxes`          : If None, will use the [consensus DnaA-box](https://doi.org/10.1093/bib/bbn031): `TTAT(A|T|C|G)CACA`.
@@ -26,8 +31,19 @@ class ORCA:
         - `max_point_spread`    : Maximum spread a group can have when looking for connected groups. Default is 5 % of the total chromosome length
         - `windows`             : The windows around around peaks of skew curves to consider. Defaults are 1, 3 and 5 % of the total chromosome length.
         - `model`               : A fitted scikit-learn classifier. Recommended to use the one provided on [GitHub](https://github.com/ZoyavanMeel/ORCA/).
+    
+    Returns:
+        - `ORCA` : an ORCA object with properly loaded parameters.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, sequence: str = None, gene_locations: list[tuple[str, int, int]] = None, accession: str = 'Custom', **kwargs):
+        # ORCA object is instantiated first in alternate constructors, this is so that their parameters override any parameters the user added wrong in **kwargs.
+        if sequence is not None and gene_locations is not None:
+            self.seq = sequence
+            self.accession = accession
+            self.version = 0
+            self.seq_len = len(sequence)
+            self.gene_locations = [(gene[0], Peak.from_calc_middle(gene[1], gene[2], len(sequence), 0)) for gene in gene_locations]
+
         user_args = ORCA.setup_variables(**kwargs)
         for key, value in user_args.items():
             setattr(self, key, value)
@@ -404,17 +420,4 @@ if __name__ == '__main__':
     model = joblib.load("Machine_learning/75_train_model.pkl")
 
     orca = ORCA.from_pkl("Test/NC_000913_3.pkl", model=model)
-    orca.find_oriCs(True, True)
-
-    # orca_dict = ORCA.find_oriCs(
-    #     accession='NC_000913', # E. coli K-12       #'NC_000117'
-    #     email=email,
-    #     api_key=None,
-    #     model=model,
-    #     show_plot=True,
-    #     show_info=True
-    # )
-
-    # for key in orca_dict.keys():
-    #     if key != 'z_curve' and key != 'dnaA_boxes':
-    #         print(key + ':\t', orca_dict[key])
+    orca.find_oriCs()
