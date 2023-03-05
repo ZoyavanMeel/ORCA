@@ -36,7 +36,7 @@ class FileHandler:
         accession, version = tuple(record.id.split('.'))
         seq_dict.update({'accession': accession})
         seq_dict.update({'version': int(version)})
-        seq_dict.update({'seq': record.seq})
+        seq_dict.update({'seq': str(record.seq)})
         seq_dict.update({'seq_len': len(record.seq)})
         seq_dict.update({'gene_locations': []})
         seq_dict.update({'NCBI_oriC': []})
