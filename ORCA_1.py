@@ -148,7 +148,7 @@ def curve_combinations(curves_list: Union[list, tuple], peaks_list: Union[list, 
     oriC_locations_list = []
     for peaks_i, peaks_j in combinations(peaks_list, 2):
         matched_peaks  = match_peaks(peaks_i, peaks_j)
-        oriC_locations_list.append( [Peak(Peak.get_middle(matches[0], matches[1]), len(curves_list[0]), peaks_list[0][0].window_size) for matches in matched_peaks] )
+        oriC_locations_list.append( [Peak(Peak.calc_middle(matches[0], matches[1]), len(curves_list[0]), peaks_list[0][0].window_size) for matches in matched_peaks] )
     return oriC_locations_list
 
 
@@ -179,7 +179,7 @@ def process_array(curve: np.ndarray, mode: str, window_size: int) -> list:
     peaks_to_merge = Peak.get_peaks_to_merge(accepted_peaks)
 
     single_peaks = [x for x in accepted_peaks if not any(x in y for y in peaks_to_merge)]
-    merged_peaks = [Peak(to_merge[0].get_middle(to_merge[1]),len(curve), window_size) for to_merge in peaks_to_merge]
+    merged_peaks = [Peak(to_merge[0].calc_middle(to_merge[1]),len(curve), window_size) for to_merge in peaks_to_merge]
     return single_peaks + merged_peaks
 
 
@@ -320,7 +320,10 @@ def find_oriCs(
 
     ## Finding connected components in undirected graph with a depth-first search to merge Z-curve oriCs
     matrix_pot_oriCs = hf.get_adj_mat(peaks)
+    np.set_printoptions(threshold=np.inf)
+    print(matrix_pot_oriCs)
     connected_groups = hf.get_connected_groups(peaks, matrix_pot_oriCs, int(seq_len*max_group_spread))
+    print(connected_groups)
 
     oriCs, Z_scores = merge_oriCs(seq_len, connected_groups, window_size=int(seq_len*windows[-1]))
 
@@ -388,14 +391,14 @@ if __name__ == '__main__':
     email = 'no_need_for_a_real@email_address.com'
     model = joblib.load('Machine_Learning/75_train_model.pkl')
 
-    start = time.perf_counter()
-    orca = ORCA.from_pkl(path="Test/NC_000913_3.pkl", model=model)
-    orca.find_oriCs(True, False)
-    print('new', time.perf_counter() - start)
+    # start = time.perf_counter()
+    # orca = ORCA.from_pkl(path="Test/NC_000913_3.pkl", model=model)
+    # orca.find_oriCs(True, False)
+    # print('new', time.perf_counter() - start)
 
     start = time.perf_counter()
     properties = find_oriCs(
-        accession='NC_000913',#'NC_000913', # E. coli K-12
+        accession= 'NC_000117',#'NC_000913', # E. coli K-12
         email=email,
         api_key=None,
         model=model,

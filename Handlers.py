@@ -152,7 +152,7 @@ class FileHandler:
 class CurveHandler:
     """Static class for handing and processing disparity curves"""
     @staticmethod
-    def process_curve(curve: np.ndarray, mode: str, window_size: int) -> list:
+    def process_curve(curve: np.ndarray, mode: str, window_size: int) -> list[Peak]:
         '''Runs the given 1D-array (curve) through all processing functions for oriC identification. Returns its peaks'''
         init_peaks = [Peak(peak, curve.shape[0], window_size) for peak in CurveHandler.detect_peaks(curve)]
         accepted_peaks = CurveHandler.filter_peaks(curve, mode, init_peaks)

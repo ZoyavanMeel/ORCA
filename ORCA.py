@@ -23,7 +23,7 @@ class ORCA:
                                 Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
         - `max_mismatches`      : Maximum allowed mismatches allowed in a dnaa_box for it still to be read as such. Recommended: 0; recommended max: 2.
         - `genes_of_interest`   : List of gene names to consider as 'oriC-proximal' and use for helping estimate the location of the oriC.
-        - `max_group_spread`    : Maximum spread a group can have when looking for connected groups. Default is 5 % of the total chromosome length
+        - `max_point_spread`    : Maximum spread a group can have when looking for connected groups. Default is 5 % of the total chromosome length
         - `windows`             : The windows around around peaks of skew curves to consider. Defaults are 1, 3 and 5 % of the total chromosome length.
         - `model`               : A fitted scikit-learn classifier. Recommended to use the one provided on [GitHub](https://github.com/ZoyavanMeel/ORCA/).
     """
@@ -120,7 +120,7 @@ class ORCA:
                                 Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
         - `max_mismatches`      : Maximum allowed mismatches allowed in a dnaa_box for it still to be read as such. Recommended: 0; recommended max: 2.
         - `genes_of_interest`   : List of gene names to consider as 'oriC-proximal' and use for helping estimate the location of the oriC.
-        - `max_group_spread`    : Maximum spread a group can have when looking for connected groups. Default is 5 % of the total chromosome length
+        - `max_point_spread`    : Maximum distance between points in a group when looking for connected groups. Default is 5 % of the total chromosome length
         - `windows`             : The windows around around peaks of skew curves to consider. Defaults are 1, 3 and 5 % of the total chromosome length.
         - `model`               : A fitted scikit-learn classifier. Recommended to use the one provided on [GitHub](https://github.com/ZoyavanMeel/ORCA/).
         """
@@ -129,7 +129,7 @@ class ORCA:
             'dnaa_boxes'        : ['TTATACACA', 'TTATTCACA', 'TTATCCACA', 'TTATGCACA'],
             'genes_of_interest' : ['dnaA', 'dnaN'],
             'windows'           : [0.01, 0.03, 0.05],
-            'max_group_spread'  : 0.05,
+            'max_point_spread'  : 0.05,
             'max_mismatches'    : 0,
             'model'             : None,
         }
@@ -142,7 +142,7 @@ class ORCA:
         assert isinstance(args['windows'], list), 'windows must be a list of integers.'
         assert isinstance(args['dnaa_boxes'], list), 'dnaa_boxes must be a list of strings.'
         assert isinstance(args['max_mismatches'], int), 'max_mismatches must be an integer.'
-        assert isinstance(args['max_group_spread'], float), 'max_group_spread must be an integer.'
+        assert isinstance(args['max_point_spread'], float), 'max_point_spread must be an integer.'
         assert isinstance(args['genes_of_interest'], list), 'genes_of_interest must be a list of strings.'
 
         # Setup all possible dnaA-box regions
@@ -275,7 +275,7 @@ class ORCA:
         '''Finding connected components in undirected graph with a depth-first search to merge Z-curve oriCs'''
 
         adj_mat = Peak.get_adjacency_matrix(peaks)
-        connected_groups = Peak.get_connected_groups(peaks, adj_mat, int(self.seq_len*self.max_group_spread))
+        connected_groups = Peak.select_connected_groups(peaks, adj_mat, int(self.seq_len*self.max_point_spread))
         connected_groups.sort(key=lambda x:len(x), reverse=True)
 
         total_pot_oriCs = len( [y for x in connected_groups for y in x] )

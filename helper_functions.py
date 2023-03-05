@@ -71,7 +71,7 @@ def extract_locations(seq_len: int, genes_dict: dict) -> list[Peak]:
         if clean_locs is None:
             return None
         locations.extend(clean_locs)
-    middles = [Peak(Peak.get_middle(loc[0], loc[1], seq_len), seq_len, 0) for loc in locations]
+    middles = [Peak(Peak.calc_middle(loc[0], loc[1], seq_len), seq_len, 0) for loc in locations]
     return middles
 
 
