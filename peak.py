@@ -36,7 +36,7 @@ class Peak():
     @classmethod
     def from_calc_middle(cls, five_side, three_side, seq_len, window_size):
         '''Calculates the middle of five_side and three_side and uses that as the middle'''
-        return cls( cls.get_middle(five_side, three_side, seq_len), seq_len, window_size )
+        return cls( cls.calc_middle(five_side, three_side, seq_len), seq_len, window_size )
     
 
     @classmethod
@@ -45,7 +45,7 @@ class Peak():
         Calculates the middle of five_side and three_side and uses that as the middle 
         AND uses these edges to determine the window_size.
         '''
-        return cls( cls.get_middle(five_side, three_side, seq_len), seq_len, cls.calc_dist(five_side, three_side, seq_len) )
+        return cls( cls.calc_middle(five_side, three_side, seq_len), seq_len, cls.calc_dist(five_side, three_side, seq_len) )
 
 
     @staticmethod
@@ -83,7 +83,7 @@ class Peak():
 
 
     @staticmethod
-    def get_adjacency_matrix(peaks_a: list["Peak"], peaks_b: list["Peak"] = None, seq_len: int = None) -> np.ndarray:
+    def get_adjacency_matrix(peaks_a: list[Union["Peak", int]], peaks_b: list[Union["Peak", int]] = None, seq_len: int = None) -> np.ndarray:
         """
         Gets adjacency matrix for given list of `Peak` or `int` objects.
         The matrix can be between a list and the elements of itself or between the elements of two lists.
@@ -100,7 +100,7 @@ class Peak():
             raise ValueError('Not all elements in `peaks_a` are of the same type.')
 
         if peaks_b is not None:
-            if not all(isinstance(x, type(peaks_a[0])) for x in peaks_a[1:]):
+            if not all(isinstance(x, type(peaks_b[0])) for x in peaks_b[1:]):
                 raise ValueError('Not all elements in `peaks_b` are of the same type.')
             if not isinstance(peaks_b[0], type(peaks_a[0])):
                 raise ValueError('Elements is `peaks_a` are not the same type as `peaks_b`.')
@@ -111,66 +111,85 @@ class Peak():
             adj_mat = np.zeros((len(peaks_a), len(peaks_a)))
             iterator = combinations(enumerate(peaks_a), r=2)
 
-        # The function
         for (i_a, a), (i_b, b) in iterator:
             dist = Peak.calc_dist(a, b, seq_len) if are_integers else Peak.calc_dist(a.middle, b.middle, a.seq_len)
             adj_mat[i_a, i_b] = dist
-            if peaks_b is None:
-                adj_mat[i_b, i_a] = dist
+            if peaks_b is None: adj_mat[i_b, i_a] = dist
         return adj_mat
 
 
     @staticmethod
-    def get_connected_groups(peaks: list, adj_mat: np.ndarray, threshold: int) -> list:
-        """Recursively find connected groups in an undirected graph"""
+    def get_connected_groups_idx(vertices: list[int], adj_mat: np.ndarray, threshold: int) -> list:
+        """
+        Recursively find connected groups in an undirected graph. 
+        
+        Parameters:
+        - `vertices`  : list of indexes of whatever you want to group
+        - `adj_mat`   : adjacency matrix of len(vertices) x len(vertices).
+        - `threshold` : maximum size of an edge before two vertices are considered connected.
+        """
 
-        def get_connected_groups_init(peaks: list, adj_mat: np.ndarray, threshold: int) -> list:
-            """Private: Groups initial indices of `peaks`."""
-            visited = [False] * len(peaks)
-            connected_groups_idx = []
-            for i in range(len(peaks)):
-                if not visited[i]:
-                    group = []
-                    _, _, visited, group, _ = DFS_recurse(i, adj_mat, visited, group, threshold=threshold)
-                    connected_groups_idx.append(group)
-            return connected_groups_idx
-
-
-        def DFS_recurse(idx, adj_mat, visited, connected_list, threshold):
-            """Private: used by _get_connected_groups_init for recursion"""
+        def _DFS_recurse(idx: int, adj_mat: np.ndarray, visited: list[bool], connected_list: list[int], threshold: int):
+            """Private: used by get_connected_groups_idx for recursion"""
             visited[idx] = True
             connected_list.append(idx)
             for i in range(len(visited)):
-                if i == idx:
-                    continue
-                elif adj_mat[i][idx] <= threshold and not visited[i]:
-                    _, _, visited, connected_list, _ = DFS_recurse(i, adj_mat,visited, connected_list, threshold)
+                if adj_mat[i][idx] <= threshold and not visited[i]:
+                    _, _, visited, connected_list, _ = _DFS_recurse(i, adj_mat,visited, connected_list, threshold)
             return idx, adj_mat, visited, connected_list, threshold
 
-        connected_groups_idx = get_connected_groups_init(peaks, adj_mat, threshold)
+        visited = [False] * len(vertices)
+        connected_groups_idx = []
+        for i in range(len(vertices)):
+            if not visited[i]:
+                group = []
+                _, _, visited, group, _ = _DFS_recurse(i, adj_mat, visited, group, threshold=threshold)
+                connected_groups_idx.append(group)
+        return connected_groups_idx
+
+
+    @staticmethod
+    def select_connected_groups(peaks: list["Peak"], adj_mat: np.ndarray, threshold: int) -> list[list["Peak"]]:
+        """
+        Gets the connected components in an undirected graph and limits the within-distance of clusters to < threshold*3.
+
+        Parameters:
+        - `peaks`     : list of Peak objects you want to group
+        - `adj_mat`   : adjacency matrix for each Peak to each other Peak
+        - `threshold` : maximum distance between peaks on the sequence for which they are considered connected.
+        """
+        groups_to_process = Peak.get_connected_groups_idx([i for i in range(len(peaks))], adj_mat, threshold)
         accepted_groups_idx = []
-        for group_idx in connected_groups_idx:
-            flag = False
-            for i, j in combinations(group_idx, r=2):
+        t = threshold//2
+        flag = False
+        while len(groups_to_process) != 0:
+            curr_group = groups_to_process.pop(0)
+            # check within distance of group
+            for i, j in combinations(curr_group, r=2):
                 if adj_mat[i][j] > threshold*3:
-                    group_vals = [peaks[i] for i in group_idx]
-                    group_matrix = Peak.get_adjacency_matrix(group_vals, seq_len=200)
-                    split_group_idx = get_connected_groups_init(group_vals, group_matrix, threshold//2)
-                    split_group = [[group_idx[i] for i in group] for group in split_group_idx]
-                    accepted_groups_idx.extend(split_group)
                     flag = True
                     break
-            if not flag:
-                accepted_groups_idx.append(group_idx)
-            else:
+            # got flagged as too wide.
+            if flag and t > 2:
+                # get peaks that correspond to the indexes in the flagged group
+                curr_as_peaks = [peaks[i] for i in curr_group]
+                mat = Peak.get_adjacency_matrix(curr_as_peaks)
+                new_groups = Peak.get_connected_groups_idx(curr_as_peaks, mat, t)
+                # revert indexing to that of the peaks list
+                new_groups = [[curr_group[i] for i in group] for group in new_groups]
+                # add new groups for processing
+                groups_to_process.extend(new_groups)
+                t = t//2
                 flag = False
+            else:
+                accepted_groups_idx.append(curr_group)
                 
         connected_groups_vals = [ [peaks[i] for i in idx_group] for idx_group in accepted_groups_idx ]
         return connected_groups_vals
 
 
     @staticmethod
-    def get_middle(point_a: Union[int, "Peak"] , point_b: Union[int, "Peak"], curve_size: int = None) -> int:
+    def calc_middle(point_a: Union[int, "Peak"] , point_b: Union[int, "Peak"], curve_size: int = None) -> int:
         """
         Calculate the distance between Peak a and b on circular DNA.
         Returns a new Peak.middle (int) in the middle of a and b
@@ -193,21 +212,6 @@ class Peak():
 
     def intersecting_windows(self, other: "Peak") -> bool:
         '''T|F wether self's window intersects with other's window.'''
-
-        # def intersecting_windows(self, other: "Peak") -> bool:
-        #     '''T|F wether self's window intersects with other's window'''
-        #     if not isinstance(other, Peak):
-        #         raise ValueError(f'other is a {type(other)}, must be a Peak object')
-        #     # f = five_side, t = three_side
-        #     f_t = Peak.calc_dist(self.five_side, other.three_side, self.seq_len)
-        #     t_f = Peak.calc_dist(self.three_side, other.five_side, self.seq_len)
-        #     f_f = Peak.calc_dist(self.five_side, other.five_side, self.seq_len)
-        #     t_t = Peak.calc_dist(self.three_side, other.three_side, self.seq_len)
-
-        #     a = f_t <= self.window_size // 2 or t_f <= self.window_size // 2
-        #     b = f_f <= self.window_size // 2 and t_t <= self.window_size // 2
-        #     return a or b
-
         if not isinstance(other, Peak):
             raise ValueError(f'other is a {type(other)}, must be a Peak object')
         x = Peak.calc_dist(self.middle, other.middle, self.seq_len)
@@ -240,7 +244,7 @@ class Peak():
             and self.three_side == other.three_side
 
     def __repr__(self):
-        return f'Peak(middle={self.middle}, window_size={self.window_size})'
+        return f'Peak(middle={self.middle}, window_size={self.window_size}, seq_len={self.seq_len})'
 
     def __str__(self):
         return str(self.middle)
@@ -267,4 +271,4 @@ class Peak():
         return self.__add__(other)
 
     def __rsub__(self, other: "Peak") -> Union["Peak", int, float]:
-        return self.__sub__(other)
+        return Peak(-self.middle, self.seq_len, self.window_size).__add__(other)
