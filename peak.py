@@ -134,7 +134,7 @@ class Peak():
             visited[idx] = True
             connected_list.append(idx)
             for i in range(len(visited)):
-                if adj_mat[i][idx] <= threshold and not visited[i]:
+                if adj_mat[i][idx] < threshold and not visited[i]:
                     _, _, visited, connected_list, _ = _DFS_recurse(i, adj_mat,visited, connected_list, threshold)
             return idx, adj_mat, visited, connected_list, threshold
 
@@ -158,28 +158,28 @@ class Peak():
         - `adj_mat`   : adjacency matrix for each Peak to each other Peak
         - `threshold` : maximum distance between peaks on the sequence for which they are considered connected.
         """
-        groups_to_process = Peak.get_connected_groups_idx([i for i in range(len(peaks))], adj_mat, threshold)
+        cg_i = Peak.get_connected_groups_idx([i for i in range(len(peaks))], adj_mat, threshold)
+        groups_to_process = [(group, threshold) for group in cg_i]
         accepted_groups_idx = []
-        t = threshold//2
         flag = False
         while len(groups_to_process) != 0:
-            curr_group = groups_to_process.pop(0)
+            curr_group, curr_threshold = groups_to_process.pop(0)
             # check within distance of group
             for i, j in combinations(curr_group, r=2):
-                if adj_mat[i][j] > threshold*3:
+                #NOTE: Tune the threshold!!!!! especially check for large and realistic sequences!
+                if adj_mat[i][j] > threshold*1.5:
                     flag = True
                     break
             # got flagged as too wide.
-            if flag and t > 2:
+            if flag and curr_threshold > 0.25*threshold:
                 # get peaks that correspond to the indexes in the flagged group
-                curr_as_peaks = [peaks[i] for i in curr_group]
-                mat = Peak.get_adjacency_matrix(curr_as_peaks)
-                new_groups = Peak.get_connected_groups_idx(curr_as_peaks, mat, t)
+                curr_peaks = [peaks[i] for i in curr_group]
+                mat = Peak.get_adjacency_matrix(curr_peaks)
+                new_groups = Peak.get_connected_groups_idx(curr_peaks, mat, curr_threshold)
                 # revert indexing to that of the peaks list
                 new_groups = [[curr_group[i] for i in group] for group in new_groups]
                 # add new groups for processing
-                groups_to_process.extend(new_groups)
-                t = t//2
+                groups_to_process.extend([(new_group, 0.75*curr_threshold) for new_group in new_groups])
                 flag = False
             else:
                 accepted_groups_idx.append(curr_group)
