@@ -80,10 +80,14 @@ class TestFileHandler(ut.TestCase):
 
             api_message_1 = f' with API_key \'123\''
             api_message_2 = ' and if your API_key is correctly typed and linked to the given email'
-            message = f'Unable to fetch accession: \'ACCESSION\' using \'Some@email.address\'{api_message_1}. Please check if the accession is of an existing chromosomal sequence{api_message_2}.'
+            note = f'Unable to fetch accession: \'ACCESSION\' using \'Some@email.address\'{api_message_1}. Please check if the accession is of an existing chromosomal sequence{api_message_2}.'
+            message = "HTTP Error 400: Bad Request"
 
-            with self.assertRaisesRegex(ValueError, message):
+            try:
                 FileHandler.fetch_file("ACCESSION", self.email, "123", "gbwithparts")
+            except HTTPError as e:
+                self.assertRegex(str(e), message)
+                self.assertRegex(e.__notes__[0], note)
 
 
     def test_fetch_file_3_bad_request_no_api_key(self):
@@ -92,19 +96,26 @@ class TestFileHandler(ut.TestCase):
             code = 400; msg = "Bad Request"; hdrs = "Some headers"; fp = ""
             mock_efetch.side_effect = HTTPError(url, code, msg, hdrs, fp)
 
-            message = f'Unable to fetch accession: \'ACCESSION\' using \'Some@email.address\'. Please check if the accession is of an existing chromosomal sequence.'
-
-            with self.assertRaisesRegex(ValueError, message):
+            note = f'Unable to fetch accession: \'ACCESSION\' using \'Some@email.address\'. Please check if the accession is of an existing chromosomal sequence.'
+            message = "HTTP Error 400: Bad Request"
+    
+            try:
                 FileHandler.fetch_file("ACCESSION", self.email, None, "gbwithparts")
+            except HTTPError as e:
+                self.assertRegex(str(e), message)
+                self.assertRegex(e.__notes__[0], note)
 
 
     def test_fetch_file_4_no_connetion(self):
         with m.patch('Bio.Entrez.efetch') as mock_efetch:
             mock_efetch.side_effect = URLError("My reason")
-            message = 'You are fetching a file from the NCBI servers. Please make sure you have an internet connection to do so.'
+            note = 'You are fetching a file from the NCBI servers. Please make sure you have an internet connection to do so.'
 
-            with self.assertRaisesRegex(ConnectionError, message):
+            try:
                 FileHandler.fetch_file("ACCESSION", self.email, "123", "gbwithparts")
+            except URLError as e:
+                self.assertRegex(str(e), "My reason")
+                self.assertRegex(e.__notes__[0], note)
 
 
     def test_parse_SeqRecord_1_good(self):

@@ -24,9 +24,11 @@ class FileHandler:
                 api_message_2 = ' and if your API_key is correctly typed and linked to the given email'
             else :
                 api_message_1, api_message_2 = '', ''
-            raise ValueError(f'Unable to fetch accession: \'{accession}\' using \'{email}\'{api_message_1}. Please check if the accession is of an existing chromosomal sequence{api_message_2}.') from BadRequest
+            BadRequest.add_note(f'Unable to fetch accession: \'{accession}\' using \'{email}\'{api_message_1}. Please check if the accession is of an existing chromosomal sequence{api_message_2}.')
+            raise
         except URLError as NoConnection:
-            raise ConnectionError('You are fetching a file from the NCBI servers. Please make sure you have an internet connection to do so.') from NoConnection
+            NoConnection.add_note('You are fetching a file from the NCBI servers. Please make sure you have an internet connection to do so.')
+            raise
 
 
     @staticmethod
