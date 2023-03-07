@@ -35,7 +35,7 @@ class ORCA:
     Returns:
         - `ORCA` : an ORCA object with properly loaded parameters.
     """
-    def __init__(self, sequence: str = None, gene_locations: list[tuple[str, int, int]] = None, accession: str = 'Custom', **kwargs):
+    def __init__(self, sequence: str = None, gene_locations: list[tuple[str, int, int]] = None, accession: str = 'Custom', **kwargs) -> "ORCA":
         # ORCA object is instantiated first in alternate constructors, this is so that their parameters override any parameters the user added wrong in **kwargs.
         if sequence is not None and gene_locations is not None:
             self.seq = sequence
@@ -50,7 +50,7 @@ class ORCA:
 
 
     @classmethod
-    def from_gbk(cls, path: str, **kwargs):
+    def from_gbk(cls, path: str, **kwargs) -> "ORCA":
         """
         Instatiates an ORCA object from a GenBank (gbk) file.
 
@@ -71,7 +71,7 @@ class ORCA:
 
 
     @classmethod
-    def from_pkl(cls, path: str, **kwargs):
+    def from_pkl(cls, path: str, **kwargs) -> "ORCA":
         """
         Instatiates an ORCA object from a pickled Biopython SeqRecord.
         
@@ -97,7 +97,7 @@ class ORCA:
 
 
     @classmethod
-    def from_accession(cls, accession: str, email: str, api_key: str = None, **kwargs):
+    def from_accession(cls, accession: str, email: str, api_key: str = None, **kwargs) -> "ORCA":
         """
         Instatiates an ORCA object from a given accession number.
         
@@ -238,7 +238,7 @@ class ORCA:
         return mismatch_boxes
 
 
-    def calculate_disparity_curves(self):
+    def calculate_disparity_curves(self) -> None:
         '''
         Z-curve and GC-skew calculation and k-mer indexing. In one function so only one iteration of the sequence is necessary.\n
         Sets:
@@ -339,7 +339,7 @@ class ORCA:
         return [1 - x for x in np.mean(norm_mat, axis=1)]
 
 
-    def find_oriCs(self, show_info: bool = False, show_plot: bool = False):
+    def find_oriCs(self, show_info: bool = False, show_plot: bool = False) -> None:
         '''
         Locates potential oriCs on circular bacterial chromosomes based on Z-curve and GC-skew analysis, dnaA box analysis, and dnaA/dnaN gene locations.
         Three default window_sizes are used: 1, 3 and 5 % of the total genome length. See the README-file in the [GitHub repository](https://github.com/ZoyavanMeel/ORCA/)
