@@ -147,13 +147,14 @@ class TestPeak(ut.TestCase):
             Peak.get_adjacency_matrix(self.lst1, lst2)
 
 
-    def test_get_connected_groups_1(self):
+    def test_get_connected_components_idx_1(self):
         '''
         /0         1         2         3         4         5         6         7         8         9         10
         / i   i i                                         jj   j     j                                      i
         /|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|
         /________                                         ____________                                      __
         '''
+
         i1 = Peak(  0, 1000, 60)
         i2 = Peak( 40, 1000, 60)
         i3 = Peak( 60, 1000, 60)
@@ -166,13 +167,48 @@ class TestPeak(ut.TestCase):
 
         peaks = [i1, i2, i3, i4, j1, j2, j3, j4]
         mat = Peak.get_adjacency_matrix(peaks)
-        # check the threshold
-        res = sorted(Peak.select_connected_groups(peaks, mat, 120))
-        exp = sorted([[i1, i2, i3, i4], [j1, j2, j3, j4]])
+
+        res = sorted(Peak.get_connected_components_idx([i for i in range(len(peaks))], mat, 120))
+        exp = sorted([[0, 1, 2, 3], [4, 5, 6, 7]])
         self.assertEqual(res, exp)
 
 
-    def test_get_connected_groups_2(self):
+    def test_get_connected_components_idx_2(self):
+        '''
+        /0         1         2         3         4         5         6         7         8         9         10
+        /i  i  i  i  i  i  i  i  i  i  i  i  i  i  i  i        i  i  i  i  i  i  i  i  i  i  i  i  i  i  i  i 
+        /|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|
+        /______________________________________________        _______________________________________________
+        '''
+        lst_peaks = [Peak(i, 1000, 60) for i in range(0, 1000, 20)]
+        indexes = [i for i in range(len(lst_peaks))]
+
+        mat = Peak.get_adjacency_matrix(lst_peaks)
+
+        res = Peak.get_connected_components_idx(indexes, mat, 50)
+        exp = [indexes]
+        self.assertEqual(res, exp)
+
+
+    def test_get_connected_components_idx_3(self):
+        '''
+        /0         1         2         3         4         5         6         7         8         9         10
+        /      i  i  i  i  i  i  i  i  i  i  i  i  i  i        i  i  i  i  i  i  i  i  i  i  i  i  i
+        /|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|
+        /      ________________________________________        _____________________________________
+        '''
+        lst_peaks_1 = [Peak(i, 1000, 60) for i in range(60, 450, 20)]
+        lst_peaks_2 = [Peak(i, 1000, 60) for i in range(540, 910, 20)]
+        indexes = [i for i in range(len(lst_peaks_1 + lst_peaks_2))]
+
+        mat = Peak.get_adjacency_matrix(lst_peaks_1 + lst_peaks_2)
+
+        res = Peak.get_connected_components_idx(indexes, mat, 50)
+        exp = [[i for i in range(len(lst_peaks_1))], [i+len(lst_peaks_1) for i in range(len(lst_peaks_2))]]
+        self.assertEqual(res, exp)
+
+
+    def test_select_connected_groups_2(self):
         '''
         /0         1         2         3         4         5         6         7         8         9         10
         / i   i i                                         jj   j     j                                      i
@@ -196,7 +232,7 @@ class TestPeak(ut.TestCase):
         self.assertEqual(res, exp)
 
 
-    def test_get_connected_groups_3(self):
+    def test_select_connected_groups_3(self):
         '''
         /0         1         2         3         4         5         6         7         8         9         10
         / i   i i  i   i i                                jj   j   j                                        i
@@ -226,7 +262,7 @@ class TestPeak(ut.TestCase):
         self.assertEqual(res, exp)
 
 
-    def test_get_connected_groups_4(self):
+    def test_select_connected_groups_4(self):
         '''
         /0         1         2         3         4         5         6         7         8         9         10
         / i   i i                                jjjjjjjjjj jjjjjjjjjj                                      i
@@ -250,7 +286,7 @@ class TestPeak(ut.TestCase):
         self.assertEqual(res, exp)
 
 
-    def test_get_connected_groups_5(self):
+    def test_select_connected_groups_5(self):
         '''
         /0         1         2         3         4         5         6         7         8         9         10
         / i   i i                           j j  jjj  jjj j jjj j jj j   j                                  i
@@ -275,7 +311,7 @@ class TestPeak(ut.TestCase):
         self.assertEqual(res, exp)
 
 
-    def test_get_connected_groups_6(self):
+    def test_select_connected_groups_6(self):
         '''
         /0         1         2         3         4         5         6         7         8         9         10        1         2         3         4         5         6         7         8         9         20
         / i   i i                           j j  jjj  jjj j jjj j jj j   j                                  i i   i i                           j j  jjj  jjj j jjj j jj j   j                                  i
