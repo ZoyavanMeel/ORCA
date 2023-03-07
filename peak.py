@@ -4,7 +4,7 @@ from itertools import combinations, product
 import numpy as np
 
 class Peak():
-    def __init__(self, middle: int, seq_len: int, window_size: int):
+    def __init__(self, middle: int, seq_len: int, window_size: int) -> "Peak":
         '''
         five_side  : 5' side of the window
         three_side : 3' side of the window.
@@ -34,13 +34,13 @@ class Peak():
 
 
     @classmethod
-    def from_calc_middle(cls, five_side, three_side, seq_len, window_size):
+    def from_calc_middle(cls, five_side, three_side, seq_len, window_size) -> "Peak":
         '''Calculates the middle of five_side and three_side and uses that as the middle'''
         return cls( cls.calc_middle(five_side, three_side, seq_len), seq_len, window_size )
     
 
     @classmethod
-    def from_edges(cls, five_side, three_side, seq_len):
+    def from_edges(cls, five_side, three_side, seq_len) -> "Peak":
         '''
         Calculates the middle of five_side and three_side and uses that as the middle 
         AND uses these edges to determine the window_size.
@@ -119,7 +119,7 @@ class Peak():
 
 
     @staticmethod
-    def get_connected_groups_idx(vertices: list[int], adj_mat: np.ndarray, threshold: int) -> list:
+    def get_connected_components_idx(vertices: list[int], adj_mat: np.ndarray, threshold: int) -> list:
         """
         Recursively find connected groups in an undirected graph. 
         
@@ -158,7 +158,7 @@ class Peak():
         - `adj_mat`   : adjacency matrix for each Peak to each other Peak
         - `threshold` : maximum distance between peaks on the sequence for which they are considered connected.
         """
-        cg_i = Peak.get_connected_groups_idx([i for i in range(len(peaks))], adj_mat, threshold)
+        cg_i = Peak.get_connected_components_idx([i for i in range(len(peaks))], adj_mat, threshold)
         groups_to_process = [(group, threshold) for group in cg_i]
         accepted_groups_idx = []
         flag = False
@@ -175,7 +175,7 @@ class Peak():
                 # get peaks that correspond to the indexes in the flagged group
                 curr_peaks = [peaks[i] for i in curr_group]
                 mat = Peak.get_adjacency_matrix(curr_peaks)
-                new_groups = Peak.get_connected_groups_idx(curr_peaks, mat, curr_threshold)
+                new_groups = Peak.get_connected_components_idx(curr_peaks, mat, curr_threshold)
                 # revert indexing to that of the peaks list
                 new_groups = [[curr_group[i] for i in group] for group in new_groups]
                 # add new groups for processing
@@ -243,10 +243,10 @@ class Peak():
             and self.five_side == other.five_side \
             and self.three_side == other.three_side
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'Peak(middle={self.middle}, window_size={self.window_size}, seq_len={self.seq_len})'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.middle)
 
     def __lt__(self, other: "Peak") -> bool:
