@@ -15,8 +15,8 @@ EMAIL   = 'no_need_for_a_real@email_address.com'
 API_KEY = None
 MODEL   = joblib.load('Machine_Learning/exp_train_model.pkl')
 
-# Cluster path
-sys.path.append('../OriC_Finder/')
+# # Cluster path
+# sys.path.append('../OriC_Finder/')
 
 from ORCA_1 import find_oriCs
 

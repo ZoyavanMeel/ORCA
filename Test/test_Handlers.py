@@ -1,12 +1,9 @@
-import sys, os, io
+import os, io, pickle
 
 import unittest as ut
 import unittest.mock as m
 
-sys.path.insert(0,'..')
-os.chdir( os.path.dirname( os.path.abspath(__file__) ) )
-
-from Handlers import *
+from context import *
 
 
 class TestFileHandler(ut.TestCase):
@@ -14,9 +11,10 @@ class TestFileHandler(ut.TestCase):
 
         self.acc = "NC_000913.3"
         self.email = "Some@email.address"
-        self.out = "Mock/folder"
+        self.inp = "Mock/folder/data/input"
+        self.out = "Mock/folder/data/output"
 
-        with open("NC_000913_3.pkl","rb") as fh:
+        with open("data/input/NC_000913_3.pkl","rb") as fh:
             seq_rec = pickle.load(fh)
         self.seq_rec = seq_rec
         self.genes = ['dnaA', 'dnaN']
@@ -174,9 +172,9 @@ class TestFileHandler(ut.TestCase):
             mock_listdir.return_value = ["NC_000913_3.gbk", "NC_000001_1.gbk", "NC_000002_1.gbk"]
 
             # Call the function
-            message = f'\'NC_000913_3.gbk\' already exists in: {self.out}'
+            message = f'\'NC_000913_3.gbk\' already exists in: {self.inp}'
             with self.assertRaisesRegex(FileExistsError, message):
-                FileHandler.save_gbk(self.acc, self.email, self.out)
+                FileHandler.save_gbk(self.acc, self.email, self.inp)
 
 
     def test_save_pkl_1_good(self):
@@ -212,9 +210,9 @@ class TestFileHandler(ut.TestCase):
             mock_listdir.return_value = ["NC_000913_3.pkl", "NC_000001_1.pkl", "NC_000002_1.pkl"]
 
             # Call the function
-            message = f'\'NC_000913_3.pkl\' already exists in: {self.out}'
+            message = f'\'NC_000913_3.pkl\' already exists in: {self.inp}'
             with self.assertRaisesRegex(FileExistsError, message):
-                FileHandler.save_pkl(self.acc, self.email, self.out)
+                FileHandler.save_pkl(self.acc, self.email, self.inp)
 
 
 class TestCurveHandler(ut.TestCase):

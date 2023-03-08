@@ -1,10 +1,10 @@
 # Libraries
-import os, warnings, joblib, time
+import warnings, joblib, time
 import scipy.signal as sp
 import numpy as np
 
 from itertools import combinations, product
-from typing import Union, Tuple, List
+from typing import Union
 
 # Self-made modules
 from Peak import Peak
@@ -13,11 +13,8 @@ import plotter_functions as pf
 
 from ORCA import ORCA
 
-# Set cwd to location of this script
-os.chdir( os.path.dirname( os.path.abspath(__file__) ) )
 
-
-def calc_disparities(seq: str, k: int, dnaa_boxes: set[str]) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict]:
+def calc_disparities(seq: str, k: int, dnaa_boxes: set[str]) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict]:
     '''
     Z-curve and GC-skew calculation and k-mer indexing. In one function so only one iteration of the sequence is necessary.\n
     Parameters:
@@ -66,7 +63,7 @@ def detect_peaks(curve: np.ndarray) -> np.ndarray:
     return np.unique(np.concatenate( (maxima, minima), axis=0))
 
 
-def filter_peaks(curve: np.ndarray, peaks: List[Peak], mode: str) -> list:
+def filter_peaks(curve: np.ndarray, peaks: list[Peak], mode: str) -> list:
     '''
     Filters the given peaks based on the type of extreme it should be and the area around the peak in two steps.
     - Filter 1: Check if any windows intersect the window of another peak (circular DNA).
@@ -106,7 +103,7 @@ def filter_peaks(curve: np.ndarray, peaks: List[Peak], mode: str) -> list:
     return accepted_peaks
 
 
-def match_peaks(peaks_x: List[Peak], peaks_y: List[Peak]) -> list:
+def match_peaks(peaks_x: list[Peak], peaks_y: list[Peak]) -> list:
     '''Nested list of peaks from x that line up with peaks from y.'''
     matched_peaks = []
     for peak_x, peak_y in product(peaks_x, peaks_y):
@@ -152,13 +149,13 @@ def curve_combinations(curves_list: Union[list, tuple], peaks_list: Union[list, 
     return oriC_locations_list
 
 
-def merge_oriCs(curve_size: int, groups: list, window_size: int) -> Tuple[list, list]:
+def merge_oriCs(curve_size: int, groups: list, window_size: int) -> tuple[list, list]:
     '''Finds the average index of a group and returns those values. groups is a nested-list'''
     mutable = sorted( groups, key=lambda x:len(x), reverse=True )
     total_pot_oriCs = len( [y for x in mutable for y in x] )
     oriCs, Z_scores = [], []
 
-    group: List[Peak]
+    group: list[Peak]
     for group in mutable:
         group.sort()
         for i in range(len(group)):
@@ -191,7 +188,7 @@ def get_G_scores(matrix: np.ndarray) -> list:
     return [1 - x for x in np.mean(norm_mat, axis=1)]
 
 
-def get_D_scores(current_oriCs: List[Peak], kmer_dict: dict) -> list:
+def get_D_scores(current_oriCs: list[Peak], kmer_dict: dict) -> list:
     '''Process the location of dnaa_boxes and rank potential oriCs based on most surrounding dnaa_boxes.'''
     contains_boxes = []
     all_pos = [pos for pos_list in kmer_dict.values() for pos in pos_list]
@@ -226,9 +223,9 @@ def find_oriCs(
     api_key:           str         = None,
     genome_fasta:      str         = None,
     genes_fasta:       str         = None,
-    dnaa_boxes:        List[str]   = ['TTATACACA', 'TTATTCACA', 'TTATCCACA', 'TTATGCACA'],
-    genes_of_interest: List[str]   = ['dnaA', 'dnaN'],
-    windows:           List[float] = [0.01, 0.03, 0.05],
+    dnaa_boxes:        list[str]   = ['TTATACACA', 'TTATTCACA', 'TTATCCACA', 'TTATGCACA'],
+    genes_of_interest: list[str]   = ['dnaA', 'dnaN'],
+    windows:           list[float] = [0.01, 0.03, 0.05],
     max_group_spread:  float       = 0.05,
     max_mismatches:    int         = 0,
     model                          = None,
@@ -253,7 +250,7 @@ def find_oriCs(
                               Else, provide a list of 9 base strings. See the `get_dnaa_boxes` function in `helper_functions.py` for some more examples of dnaA-boxes.
                               Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
     - `max_mismatches`      : Maximum allowed mismatches before a 9-mer is considered to fit the dnaa_box. Recommended: 0; recommended max: 2.
-    - `genes_of_interest`   : List of gene names to look for in `genes_fasta`.
+    - `genes_of_interest`   : list of gene names to look for in `genes_fasta`.
     - `max_group_spread`    : Maximum spread a group can have when looking for connected groups.
     - `show_info`           : If True, prints info of ALL found oriCs. Good and bad.
     - `show_plot`           : If True, shows plot of ALL found oriCs. Good and bad. Should not be used for analysis -> Make a separate plot for the best oriCs.
@@ -261,7 +258,7 @@ def find_oriCs(
     Return:
     - `properties`          : Dictionary with properties of all oriC-like regions.
                               NOTE: oriCs are NOT sorted by importance. Recommended way to rank: learning machine decision.
-        - `'oriCs`          : List of Peak-objects. Each Peak has a index position on the given sequence and scores based on the analyses (see: ORCA.pdf).
+        - `'oriCs`          : list of Peak-objects. Each Peak has a index position on the given sequence and scores based on the analyses (see: ORCA.pdf).
         - `'dnaA_boxes'`    : Dictionary with dnaA-box 9-mers as keys and lists of position indices on the given DNA as values.
                               The indices refer to the position of the 5th base in the 9-mer.
         - etc.
@@ -352,7 +349,7 @@ def find_oriCs(
     oriC_middles = [oriC.middle for oriC in oriCs]
 
     # Setting Z-, G-, and D-scores
-    oriCs: List[Peak]
+    oriCs: list[Peak]
     for i in range(len(oriCs)):
         oriCs[i].z_score = Z_scores[i]
         oriCs[i].g_score = G_scores[i]
@@ -388,10 +385,10 @@ if __name__ == '__main__':
     email = 'no_need_for_a_real@email_address.com'
     model = joblib.load('Machine_Learning/75_train_model.pkl')
 
-    # start = time.perf_counter()
-    # orca = ORCA.from_pkl(path="Test/NC_000913_3.pkl", model=model)
-    # orca.find_oriCs(True, False)
-    # print('new', time.perf_counter() - start)
+    start = time.perf_counter()
+    orca = ORCA.from_pkl(path="data/input/NC_000913_3.pkl", model=model)
+    orca.find_oriCs(True, False)
+    print('new', time.perf_counter() - start)
 
     start = time.perf_counter()
     properties = find_oriCs(

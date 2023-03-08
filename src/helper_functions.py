@@ -6,7 +6,6 @@ from Bio import SeqIO, Entrez, Seq
 from typing import TextIO, Union, Generator, Tuple
 from urllib.error import HTTPError, URLError
 
-# Self-made module
 from Peak import Peak
 
 

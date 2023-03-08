@@ -1,15 +1,10 @@
-import sys, os
-
 import unittest as ut
 import unittest.mock as m
 
-sys.path.insert(0,'..')
-os.chdir( os.path.dirname( os.path.abspath(__file__) ) )
-
-from ORCA import *
+from context import *
 
 
-class TestPeak(ut.TestCase):
+class TestORCA(ut.TestCase):
     def setUp(self):
         ...
     

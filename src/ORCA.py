@@ -419,5 +419,5 @@ if __name__ == '__main__':
     email = 'no_need_for_a_real@email_address.com'
     model = joblib.load("Machine_learning/75_train_model.pkl")
 
-    orca = ORCA.from_pkl("Test/NC_000913_3.pkl", model=model)
-    orca.find_oriCs()
+    orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
+    orca.find_oriCs(True)

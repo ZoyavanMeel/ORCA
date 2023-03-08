@@ -1,9 +1,8 @@
-import sys
+import sys, os
 import multiprocessing as mp
 from functools import partial
 
-sys.path.append('../OriC_Finder/')
-
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 from helper_functions import download
 
 EMAIL    = 'youremail@here.com'
