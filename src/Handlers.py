@@ -38,7 +38,7 @@ class FileHandler:
         accession, version = tuple(record.id.split('.'))
         seq_dict.update({'accession': accession})
         seq_dict.update({'version': int(version)})
-        seq_dict.update({'seq': str(record.seq)})
+        seq_dict.update({'seq': str(record.seq)}) # I only use the sequence to loop over once. strings are much faster for this.
         seq_dict.update({'seq_len': len(record.seq)})
         seq_dict.update({'gene_locations': []})
         seq_dict.update({'NCBI_oriC': []})
@@ -161,7 +161,6 @@ class CurveHandler:
         peaks_to_merge = Peak.get_peaks_to_merge(accepted_peaks)
 
         single_peaks = [x for x in accepted_peaks if not any(x in y for y in peaks_to_merge)]
-        # merged_peaks = [Peak(to_merge[0].get_middle(to_merge[1]), curve.shape[0], window_size) for to_merge in peaks_to_merge]
         merged_peaks = [Peak.from_calc_middle(to_merge[0], to_merge[1], curve.shape[0], window_size) for to_merge in peaks_to_merge]
         return single_peaks + merged_peaks
     
@@ -173,7 +172,6 @@ class CurveHandler:
         for peaks_i, peaks_j in combinations(peaks_list, 2):
             matched_peaks  = Peak.match_peaks(peaks_i, peaks_j)
             oriC_locations_list.append(
-                # Peak( Peak.get_middle(matches[0], matches[1]), seq_len, peaks_list[0][0].window_size
                 [Peak.from_calc_middle(matches[0], matches[1], seq_len, peaks_list[0][0].window_size ) for matches in matched_peaks]
             )
         return oriC_locations_list
@@ -207,17 +205,15 @@ class CurveHandler:
             # Filter 1: Check if any windows intersecting the window of peak i
             if peak_i.intersecting_windows(peak_j):
                 # Either peaks at the beginning and end of the DNA sequence or a peak found by sp.find_peaks() that is very close to the global min/max 
-                if mode == 'max':
-                    reject_middle = np.where( curve == min(curve[peak_i.middle], curve[peak_j.middle]) )[0].tolist()
-                elif mode == 'min':
-                    reject_middle = np.where( curve == max(curve[peak_i.middle], curve[peak_j.middle]) )[0].tolist()
-
-                if peak_i.middle in reject_middle:
-                    rejected_peaks.append(peak_i)
-                else:
+                if mode == 'max' and curve[peak_i.middle] > curve[peak_j.middle]:
                     rejected_peaks.append(peak_j)
+                elif mode == 'min' and curve[peak_i.middle] < curve[peak_j.middle]:
+                    rejected_peaks.append(peak_j)
+                else:
+                    rejected_peaks.append(peak_i)
 
         for peak in peaks:
+            # TODO: This second filter sucks wtf. Fix this...
             # Filter 2: Check if peaks are actually the extreme in their windows
             if peak.split:
                 a, b = (peak.five_side, len(curve)-1), (0, peak.three_side)
