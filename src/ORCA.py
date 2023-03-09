@@ -15,39 +15,83 @@ import plotter_functions as pf
 
 class ORCA:
     """
-    Default constructor. Use of `from_gbk()`, `from_pkl()` or `from_accession()` is preferred.
-
-    Parameters:
-        - `sequence`            : String representation of the DNA (circular) sequence to analyse.
-        - `gene_locations`      : List of tuples in the following format: `[(gene_name, start_position, end_position), ...]`.
-        - `accession`           : Optional, used for naming, else: 'Custom'.
+    ORCA: Origin of Chromosomal Replication Assessment. Class for predicting the location of the origin of replication (ORC/oriC) of circular bacterial DNA.
+    For further instruction, consult the README on [GitHub](https://github.com/ZoyavanMeel/ORCA/).
 
     Accepted **kwargs:
-        - `dnaa_boxes`          : If None, will use the [consensus DnaA-box](https://doi.org/10.1093/bib/bbn031): `TTAT(A|T|C|G)CACA`.
-                                  Else, provide a list of 9 base strings. See the `get_dnaa_boxes_with_mismatches` function for some more examples of dnaA-boxes.
-                                  Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
-        - `max_mismatches`      : Maximum allowed mismatches allowed in a dnaa_box for it still to be read as such. Recommended: 0; recommended max: 2.
-        - `genes_of_interest`   : List of gene names to consider as 'oriC-proximal' and use for helping estimate the location of the oriC.
-        - `max_point_spread`    : Maximum distance between points in a group can have when looking for connected groups.
-                                  Default is 5 % of the total chromosome length
-        - `windows`             : The windows around around peaks of skew curves to consider. Defaults are 1, 3 and 5 % of the total chromosome length.
-        - `model`               : A fitted scikit-learn classifier. Recommended to use the one provided on [GitHub](https://github.com/ZoyavanMeel/ORCA/).
-    
-    Returns:
-        - `ORCA` : an ORCA object with properly loaded parameters.
+    ------------------
+    - `dnaa_boxes`:
+        - If None, will use the [consensus DnaA-box](https://doi.org/10.1093/bib/bbn031): `TTAT(A|T|C|G)CACA`.
+        Else, provide a list of 9 base strings. See the `get_dnaa_boxes_with_mismatches` function for some more examples of dnaA-boxes.
+        Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
+    - `max_mismatches`:
+        - Maximum allowed mismatches allowed in a dnaa_box for it still to be read as such. Recommended: 0; recommended max: 2.
+    - `genes_of_interest`:
+        - List of gene names to consider as 'oriC-proximal' and use for helping estimate the location of the oriC.
+    - `max_point_spread`:
+        - Maximum distance between points in a group can have when looking for connected groups.
+        Default is 5 % of the total chromosome length
+    - `windows`:
+        - The windows around around peaks of skew curves to consider. Defaults are 1, 3 and 5 % of the total chromosome length.
+    - `model`:
+        - A fitted scikit-learn classifier. Recommended to use the one provided on [GitHub](https://github.com/ZoyavanMeel/ORCA/).
     """
-    def __init__(self, sequence: str = None, gene_locations: list[tuple[str, int, int]] = None, accession: str = 'Custom', **kwargs) -> "ORCA":
-        # ORCA object is instantiated first in alternate constructors, this is so that their parameters override any parameters the user added wrong in **kwargs.
-        if sequence is not None and gene_locations is not None:
-            self.seq = sequence
-            self.accession = accession
-            self.version = 0
-            self.seq_len = len(sequence)
-            self.gene_locations = [(gene[0], Peak.from_calc_middle(gene[1], gene[2], len(sequence), 0)) for gene in gene_locations]
+    
+    
+    def __init__(self):
+        """
+        Empty constructor. Use: `from_gbk()`, `from_pkl()`, `from_accession()` or `from_string()` for instantiating ORCA objects.
+        """
+        pass
 
+
+    def __make(self, **kwargs):
+        """Private: used to check the validity of user-given keyword arguments and set them as instance variables."""
         user_args = ORCA.setup_variables(**kwargs)
         for key, value in user_args.items():
             setattr(self, key, value)
+
+
+    @classmethod
+    def from_string(cls, sequence: str, gene_locations: list[tuple[str, int, int]] = None, accession: str = None, **kwargs) -> "ORCA":
+        """
+        Minimal constructor: provide a string to analyse and whatever else you want.
+        
+        Parameters:
+        ----------
+        - `sequence`        : String representation of the DNA circular sequence to analyse.
+        - `gene_locations`  : Optional, list of tuples in the following format: `(gene_name, start_position, end_position)`.
+        - `accession`       : Optional, used for naming, else: 'Custom'.
+        - `**kwargs`        : Check the ORCA class documentation for valid keyword arguments.
+
+        Returns:
+        --------
+        - `ORCA` : an ORCA object.
+
+        --------------------------
+        Example:
+        --------
+
+        >>> # Bio.Seq objects are also fine, they just take longer to loop over.
+        >>> DNA = "ATCGATCGATCGATACGATGTGCTAGCTACTGATCGATCGACAGACTGCTAGCGATCCTCGA"
+        >>> gene_locs = [("dnaA", 10, 30), ("dnaN", 40, 50)]
+        >>> # To instantiate the ORCA object call:
+        >>> orca = ORCA.from_string(DNA, gene_locs)
+        >>> # To find oriCs:
+        >>> orca.find_oriCs()
+        """
+        orca = cls()
+        orca.__make(**kwargs)
+
+        orca.seq = sequence
+        orca.seq_len = len(sequence)
+        orca.version = 0
+
+        orca.accession = "Custom" if accession is None else accession
+        orca.gene_locations = [] if gene_locations is None \
+            else [(gene[0], Peak.from_calc_middle(gene[1], gene[2], len(sequence), 0)) for gene in gene_locations]
+
+        return orca
 
 
     @classmethod
@@ -56,15 +100,29 @@ class ORCA:
         Instatiates an ORCA object from a GenBank (gbk) file.
 
         Parameters:
-        - `path` : string of path to the GenBank file to analyse.
+        ----------
+        - `path`     : string of path to the GenBank file to analyse.
         - `**kwargs` : Check the ORCA class documentation for valid keyword arguments.
 
         Returns:
+        --------
         - `ORCA` : an ORCA object with properly loaded parameters.
+
+        --------------------------
+        Example:
+        -------
+
+        >>> # To instantiate the ORCA object call:
+        >>> orca = ORCA.from_gbk("path/to/file.gbk")
+        >>> # To find oriCs:
+        >>> orca.find_oriCs()
         """
         if not os.path.exists(path):
             raise FileNotFoundError(f"{path} does not exist.")
-        orca = cls(**kwargs)
+
+        orca = cls()
+        orca.__make(**kwargs)
+
         file_args = FileHandler.parse_SeqRecord(SeqIO.read(path, 'gb'), orca.genes_of_interest)
         for key, value in file_args.items():
             setattr(orca, key, value)
@@ -77,15 +135,29 @@ class ORCA:
         Instatiates an ORCA object from a pickled Biopython SeqRecord.
         
         Parameters:
-        - `path` : string of path to the pickled SeqRecord of a GenBank file.
+        -----------
+        - `path`     : string of path to the pickled SeqRecord of a GenBank file.
         - `**kwargs` : Check the ORCA class documentation for valid keyword arguments.
 
         Returns:
+        --------
         - `ORCA` : an ORCA object with properly loaded parameters.
+
+        --------------------------
+        Example:
+        --------
+
+        >>> # To instantiate the ORCA object call:
+        >>> orca = ORCA.from_pkl("path/to/file.pkl")
+        >>> # To find oriCs:
+        >>> orca.find_oriCs()
         """
         if not os.path.exists(path):
             raise FileNotFoundError(f"{path} does not exist.")
-        orca = cls(**kwargs)
+
+        orca = cls()
+        orca.__make(**kwargs)
+
         with open(path,"rb") as fh:
             record = pickle.load(fh)
             fh.close()
@@ -103,15 +175,28 @@ class ORCA:
         Instatiates an ORCA object from a given accession number.
         
         Parameters:
+        -----------
         - `accession` : accession to analyse. ORCA will fetch and parse the required file.
         - `email`     : your email address. Always tell NCBI who you are.
         - `api_key`   : Optional. Only necessary if you are doing more than 10 requests per second.
         - `**kwargs`  : Check the ORCA class documentation for valid keyword arguments.
 
         Returns:
+        --------
         - `ORCA` : an ORCA object with properly loaded parameters.
+
+        --------------------------
+        Example:
+        --------
+
+        >>> # To instantiate the ORCA object call:
+        >>> orca = ORCA.from_accession("NC_example.3", "your@email.com")
+        >>> # To find oriCs:
+        >>> orca.find_oriCs()
         """
-        orca = cls(**kwargs)
+        orca = cls()
+        orca.__make(**kwargs)
+
         if email is None:
             raise ValueError(f"""
                 NCBI requires you to specify an email address to make use of their services.
@@ -129,17 +214,8 @@ class ORCA:
     @staticmethod
     def setup_variables(**kwargs) -> dict:
         """
-        Handle the user input parameters and throw errors and warnings if they are not valid.
-        
-        Accepted **kwargs:
-        - `dnaa_boxes`          : If None, will use the [consensus DnaA-box](https://doi.org/10.1093/bib/bbn031): `TTAT(A|T|C|G)CACA`.
-                                Else, provide a list of 9 base strings. See the `get_dnaa_boxes` function in `helper_functions.py` for some more examples of dnaA-boxes.
-                                Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
-        - `max_mismatches`      : Maximum allowed mismatches allowed in a dnaa_box for it still to be read as such. Recommended: 0; recommended max: 2.
-        - `genes_of_interest`   : List of gene names to consider as 'oriC-proximal' and use for helping estimate the location of the oriC.
-        - `max_point_spread`    : Maximum distance between points in a group when looking for connected groups. Default is 5 % of the total chromosome length
-        - `windows`             : The windows around around peaks of skew curves to consider. Defaults are 1, 3 and 5 % of the total chromosome length.
-        - `model`               : A fitted scikit-learn classifier. Recommended to use the one provided on [GitHub](https://github.com/ZoyavanMeel/ORCA/).
+        Handle the user input parameters and throw errors and warnings if they are not valid. 
+        Check the ORCA class documentation for valid keyword arguments.
         """
 
         defaults = {
@@ -347,16 +423,68 @@ class ORCA:
         for more information or consult ORCA.pdf for more extensive results and analyses of ORCA.
 
         Parameters:
-        - `show_info`           : If True, prints info of ALL found oriCs. Good and bad.
-        - `show_plot`           : If True, shows plot of ALL found oriCs. Good and bad. Should not be used for analysis -> Make a separate plot for the best oriCs.
+        -----------
+        - `show_info`:
+            - If True, prints info of ALL found oriCs. Good and bad.
 
-        Return:
-        - `properties`   : Dictionary with properties of all oriC-like regions.
-                           NOTE: oriCs are NOT sorted by importance. Recommended way to rank: learning machine decision.
-        - `'oriCs`       : List of Peak-objects. Each Peak has a index position on the given sequence and scores based on the analyses (see: ORCA.pdf).
-        - `'dnaA_boxes'` : Dictionary with dnaA-box 9-mers as keys and lists of position indices on the given DNA as values.
-                           The indices refer to the position of the 5th base in the 9-mer.
-        - etc.
+        - `show_plot`:
+            - If True, shows plot of ALL found oriCs. Good and bad. Should not be used for analysis -> Make a separate plot for the best oriCs.
+
+        Results
+        -------
+        Adds new instance variables to the ORCA object based on the analysis.
+
+        All attributes after calling `find_oriCs`:
+        - `accession`:
+            - `str` Accesssion number.
+        - `version`:
+            - `int` Accession version number.
+        - `input_dnaa_boxes`:
+            - `list[str]` List of user-given dnaA-boxes to look for.
+        - `dnaa_boxes`:
+            - `list[str]` List of all possible accepted dnaA-boxes based on the given dnaA-boxes and the allowed `max_mismatches`.
+        - `dnaa_dict`:
+            - `dict[str : list[int]]` Dictionary of dnaA-box indexes on the DNA sequence.
+        - `max_mismatches`:
+            - `int` Maximum allowed mismatches in the proposed dnaA-boxes.
+        - `genes_of_interest`:
+            - `list[str]` List of user-given genes that relate to the location of oriCs.
+        - `gene_locations`:
+            - `list[tuple[str, Peak]]` List of locations of the `genes_of_interest`.
+        - `NCBI_oriC`:
+            - `list[tuple[str, Peak]]` Only created if the file/accesssion analysed had an annotated 'rep_origin'
+        - `windows`:
+            - `list[int]` Windows surrounding potential oriCs. Used for filtering, distance approximation, and generalisations
+        - `max_point_spread`:
+            - `float` Maximum distance between points in a component as a fraction of the length of the sequence
+        - `model`:
+            - `sklearn.classifier` Scikit-learn classifier used for predicting the significance of the found oriCs.
+        - `seq`:
+            - `str` String representation of the DNA sequence
+        - `seq_len`:
+            - `int` Length of the DNA sequence
+        - `x`, `y`, `z`, `gc`:
+            - `numpy.ndarray` Three components of the Z-curve as well as the GC-skew curve
+        - `oriCs`:
+            - `list[Peak]` List of Peak object of the predicted origin locations. Consult its scores and prediction for analysis of its validity.
+        - `oriC_middles`:
+            - `list[int]` List of only the middle posistion point of each predicted oriC in the same order as `oriCs`.
+        - `Z_scores`, `G_scores`, `D_scores`:
+            - `list[float]` List of scores based on the analysis of the Z-curve, gene locations, and dnaA-box regions. Consult the paper
+            for more information. In the same order as `oriCs`.
+        - `predictions`:
+            - `list[float]` List of decision values decided by the given `model`. In the same order as `oriCs`.
+
+        --------------------------
+        Example:
+        --------
+
+        >>> # To instantiate the ORCA object call:
+        >>> orca = ORCA.from_accession("NC_example.3", "your@email.com")
+        >>> # To find oriCs:
+        >>> orca.find_oriCs()
+        >>> print(orca.accession)
+        NC_example.3
         '''
 
         # Step 1: Calculate disparity curves + finding dnaA-box regions
@@ -404,6 +532,7 @@ class ORCA:
         self.predictions = decisions
 
         if show_info:
+            print('Accession   :', self.accession)
             print('Predictions :', decisions)
             print('Z-scores    :', Z_scores)
             print('G-scores    :', G_scores)
