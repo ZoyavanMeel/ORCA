@@ -6,7 +6,7 @@ import unittest.mock as m
 from context import *
 
 
-class TestFileHandler(ut.TestCase):
+class TestBioFile(ut.TestCase):
     def setUp(self):
 
         self.acc = "NC_000913.3"
@@ -66,7 +66,7 @@ class TestFileHandler(ut.TestCase):
     def test_fetch_file_1_good(self):
         with m.patch('Bio.Entrez.efetch') as mock_efetch:
             mock_efetch.return_value = self.text_io
-            x = FileHandler.fetch_file(self.acc, self.email, None, "gbwithparts")
+            x = BioFile.fetch_file(self.acc, self.email, None, "gbwithparts")
             self.assertEqual(self.text_io, x)
 
 
@@ -82,7 +82,7 @@ class TestFileHandler(ut.TestCase):
             message = "HTTP Error 400: Bad Request"
 
             try:
-                FileHandler.fetch_file("ACCESSION", self.email, "123", "gbwithparts")
+                BioFile.fetch_file("ACCESSION", self.email, "123", "gbwithparts")
             except HTTPError as e:
                 self.assertRegex(str(e), message)
                 self.assertRegex(e.__notes__[0], note)
@@ -98,7 +98,7 @@ class TestFileHandler(ut.TestCase):
             message = "HTTP Error 400: Bad Request"
     
             try:
-                FileHandler.fetch_file("ACCESSION", self.email, None, "gbwithparts")
+                BioFile.fetch_file("ACCESSION", self.email, None, "gbwithparts")
             except HTTPError as e:
                 self.assertRegex(str(e), message)
                 self.assertRegex(e.__notes__[0], note)
@@ -110,31 +110,31 @@ class TestFileHandler(ut.TestCase):
             note = 'You are fetching a file from the NCBI servers. Please make sure you have an internet connection to do so.'
 
             try:
-                FileHandler.fetch_file("ACCESSION", self.email, "123", "gbwithparts")
+                BioFile.fetch_file("ACCESSION", self.email, "123", "gbwithparts")
             except URLError as e:
                 self.assertRegex(str(e), "My reason")
                 self.assertRegex(e.__notes__[0], note)
 
 
     def test_parse_SeqRecord_1_good(self):
-        res = FileHandler.parse_SeqRecord(self.seq_rec, self.genes)
+        res = BioFile.parse_SeqRecord(self.seq_rec, self.genes)
         self.assertEqual(res, self.seq_dict)
 
 
     def test_parse_SeqRecord_2_good(self):
-        res = FileHandler.parse_SeqRecord(self.seq_rec, ['dnaA'])
+        res = BioFile.parse_SeqRecord(self.seq_rec, ['dnaA'])
         self.seq_dict['gene_locations'].pop(0)
         self.assertEqual(res, self.seq_dict)
 
 
     def test_parse_SeqRecord_3_good(self):
-        res = FileHandler.parse_SeqRecord(self.seq_rec, [])
+        res = BioFile.parse_SeqRecord(self.seq_rec, [])
         self.seq_dict['gene_locations'] = []
         self.assertEqual(res, self.seq_dict)
 
 
     def test_get_accession_from_gbk(self):
-        acc, version = FileHandler.get_accession_from_gbk(self.text_io)
+        acc, version = BioFile.get_accession_from_gbk(self.text_io)
         self.assertEqual("NC_000913", acc)
         self.assertEqual("3", version)
 
@@ -154,7 +154,7 @@ class TestFileHandler(ut.TestCase):
             mock_listdir.return_value = ["NC_000000_1.gbk", "NC_000001_1.gbk", "NC_000002_1.gbk"]
 
             # Call the function
-            FileHandler.save_gbk(self.acc, self.email, self.out)
+            BioFile.save_gbk(self.acc, self.email, self.out)
 
             # Assert that the file was opened and written to correctly
             path = os.path.join(self.out, 'NC_000913_3.gbk')
@@ -174,7 +174,7 @@ class TestFileHandler(ut.TestCase):
             # Call the function
             message = f'\'NC_000913_3.gbk\' already exists in: {self.inp}'
             with self.assertRaisesRegex(FileExistsError, message):
-                FileHandler.save_gbk(self.acc, self.email, self.inp)
+                BioFile.save_gbk(self.acc, self.email, self.inp)
 
 
     def test_save_pkl_1_good(self):
@@ -190,7 +190,7 @@ class TestFileHandler(ut.TestCase):
             mock_seqIO_read.return_value = self.seq_rec
 
             # Call the function
-            FileHandler.save_pkl(self.acc, self.email, self.out)
+            BioFile.save_pkl(self.acc, self.email, self.out)
 
             # Assert that the file was opened and written to correctly
             path = os.path.join(self.out, 'NC_000913_3.pkl')
@@ -212,69 +212,7 @@ class TestFileHandler(ut.TestCase):
             # Call the function
             message = f'\'NC_000913_3.pkl\' already exists in: {self.inp}'
             with self.assertRaisesRegex(FileExistsError, message):
-                FileHandler.save_pkl(self.acc, self.email, self.inp)
+                BioFile.save_pkl(self.acc, self.email, self.inp)
 
-
-class TestCurveHandler(ut.TestCase):
-    def setUp(self):
-        '''
-        x = [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 19 18 17
-        16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0  1  2  3  4  5  6  7
-        8]
-
-        y = [ 0  1  2  3  4  5  6  7  8  9 10  9  8  7  6  5  6  7  8  9 10 11 12 13
-        14 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0  0  1  2  3  4  5  6
-        7  8]
-
-        gc = [  0  -1  -2  -3  -4  -5  -6  -7  -8  -9 -10 -11 -12 -13 -14 -15 -16 -17
-        -18 -19 -20 -19 -18 -17 -16 -15 -14 -13 -12 -11 -10  -9  -8  -7  -6  -5
-        -6  -7  -8  -9 -10  -9  -8  -7  -6  -5  -4  -3  -2  -1]
-        '''
-
-        x = [i for i in range(20)] + [i for i in range(20, 0, -1)] + [i for i in range(0, 10)]
-        y = [i for i in range(10)] + [i for i in range(10, 5, -1)] + [i for i in range(5, 15)] + [i for i in range(15, -1, -1)] + [i for i in range(10)]
-        gc = [i for i in range(0, -20, -1)] + [i for i in range(-20, -5)] + [i for i in range(-5, -10, -1)] + [i for i in range(-10, 1)]
-
-        self.x = np.asarray(x)
-        self.y = np.asarray(y)
-        self.gc = np.asarray(gc)
-
-
-    def test_process_curve_1(self):
-        res_x_min = sorted(CurveHandler.process_curve(self.x, 'min', 2))
-        res_x_max = sorted(CurveHandler.process_curve(self.x, 'max', 2))
-        res_y_min = sorted(CurveHandler.process_curve(self.y, 'min', 2))
-        res_y_max = sorted(CurveHandler.process_curve(self.y, 'max', 2))
-        res_gc_min = sorted(CurveHandler.process_curve(self.gc, 'min', 2))
-        res_gc_max = sorted(CurveHandler.process_curve(self.gc, 'max', 2))
-
-        exp_x_min = [Peak(0, 50, 2), Peak(40, 50, 2)]
-        exp_x_max = []
-        exp_y_min = []
-        exp_y_max = []
-        exp_gc_min = []
-        exp_gc_max = []
-
-        self.assertEqual(exp_x_min, res_x_min)
-        # self.assertEqual(exp_x_max, res_x_max)
-        # self.assertEqual(exp_y_min, res_y_min)
-        # self.assertEqual(exp_y_max, res_y_max)
-        # self.assertEqual(exp_gc_min, res_gc_min)
-        # self.assertEqual(exp_gc_max, res_gc_max)
-    
-
-    def test_curve_combinations_1(self):
-        ...
-
-
-    def test_detect_peaks_1(self):
-        ...
-    
-
-    def test_filter_peaks_1(self):
-        ...
-
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     ut.main()

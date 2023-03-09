@@ -8,7 +8,7 @@ from sklearn.base import is_classifier
 from Bio import Seq, SeqIO
 
 # Self-made modules
-from utils import CurveHandler, FileHandler, Plotter
+import CurveProcessing, BioFile, Plotter
 from Peak import Peak
 
 
@@ -35,8 +35,8 @@ class ORCA:
     - `model`:
         - A fitted scikit-learn classifier. Recommended to use the one provided on [GitHub](https://github.com/ZoyavanMeel/ORCA/).
     """
-    
-    
+
+
     def __init__(self):
         """
         Empty constructor. Use: `from_gbk()`, `from_pkl()`, `from_accession()` or `from_string()` for instantiating ORCA objects.
@@ -122,7 +122,7 @@ class ORCA:
         orca = cls()
         orca.__make(**kwargs)
 
-        file_args = FileHandler.parse_SeqRecord(SeqIO.read(path, 'gb'), orca.genes_of_interest)
+        file_args = BioFile.parse_SeqRecord(SeqIO.read(path, 'gb'), orca.genes_of_interest)
         for key, value in file_args.items():
             setattr(orca, key, value)
         return orca
@@ -162,7 +162,7 @@ class ORCA:
             fh.close()
             if not isinstance(record, SeqIO.SeqRecord):
                 raise ValueError("Pickled object must be a SeqRecord object")
-            file_args = FileHandler.parse_SeqRecord(record, orca.genes_of_interest)
+            file_args = BioFile.parse_SeqRecord(record, orca.genes_of_interest)
             for key, value in file_args.items():
                 setattr(orca, key, value)
             return orca
@@ -202,8 +202,8 @@ class ORCA:
                 \tCreate an NCBI account at: https://www.ncbi.nlm.nih.gov/
                 \tGenerate an API_key at: https://www.ncbi.nlm.nih.gov/account/settings/ (optional)
             """)
-        with FileHandler.fetch_file(accession, email, api_key, rettype='gbwithparts') as handle:
-            file_args = FileHandler.parse_SeqRecord(SeqIO.read(handle, 'gb'), orca.genes_of_interest)
+        with BioFile.fetch_file(accession, email, api_key, rettype='gbwithparts') as handle:
+            file_args = BioFile.parse_SeqRecord(SeqIO.read(handle, 'gb'), orca.genes_of_interest)
             handle.close()
             for key, value in file_args.items():
                 setattr(orca, key, value)
@@ -352,10 +352,10 @@ class ORCA:
         peaks = []
         for fraction in self.windows:
             window_size = int(self.seq_len * fraction)
-            peaks_x  = CurveHandler.process_curve(self.x, 'min', window_size=window_size)
-            peaks_y  = CurveHandler.process_curve(self.y, 'max', window_size=window_size)
-            peaks_gc = CurveHandler.process_curve(self.gc, 'min', window_size=window_size)
-            peaks.extend( [j for i in CurveHandler.curve_combinations( (peaks_x, peaks_y, peaks_gc), self.seq_len ) for j in i] )
+            peaks_x  = CurveProcessing.process_curve(self.x, 'min', window_size=window_size)
+            peaks_y  = CurveProcessing.process_curve(self.y, 'max', window_size=window_size)
+            peaks_gc = CurveProcessing.process_curve(self.gc, 'min', window_size=window_size)
+            peaks.extend( [j for i in CurveProcessing.curve_combinations( (peaks_x, peaks_y, peaks_gc), self.seq_len ) for j in i] )
         return peaks
 
 
