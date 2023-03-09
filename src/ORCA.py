@@ -8,9 +8,8 @@ from sklearn.base import is_classifier
 from Bio import Seq, SeqIO
 
 # Self-made modules
-from Handlers import CurveHandler, FileHandler
+from utils import CurveHandler, FileHandler, Plotter
 from Peak import Peak
-import plotter_functions as pf
 
 
 class ORCA:
@@ -266,19 +265,15 @@ class ORCA:
         - https://doi.org/10.1046/j.1365-2958.1996.6481362.x.
 
         ------------------------------------------------------------
-        """
 
-        #               Sequences                       DOI                                            Year  Notes
-        # consensus_1 = ['TTAT(A|C)CA(A|C)A']         # https://doi.org/10.1016/0092-8674(84)90284-8  (1984) The first consensus
-        # consensus_2 = ['TGTG(G|T)ATAAC']            # https://doi.org/10.1016/0022-2836(85)90299-2  (1985) Matsui-box
-        # consensus_3 = ['TTAT(A|T|C|G)CACA']         # https://doi.org/10.1093/dnares/dsm017         (2007) In (roughly) all eubacteria, not just B. subtilis
-        # consensus_4 = [                             # https://doi.org/10.1093/emboj/16.21.6574      (1997) Affinity study
-        #     'TTATCCACA', 'TTTTCCACA', 'TTATCAACA',
-        #     'TCATTCACA', 'TTATACACA', 'TTATCCAAA'
-        # ]
-        # consensus_5 = [                             # https://doi.org/10.1007/BF00273584            (1991) Only in E. coli K12. Do not use.
-        #     '(T|C)(T|C)(A|T|C)T(A|C)C(A|G)(A|C|T)(A|C)'
-        # ]
+        |                                Sequence                                      |                    DOI                       |  Year  |                     Notes                         |
+        | ---------------------------------------------------------------------------- | -------------------------------------------- | ------ | ------------------------------------------------- |
+        | 'TTAT(A\|C)CA(A\|C)A'                                                        | https://doi.org/10.1016/0092-8674(84)90284-8 |  1984  | The first consensus                               |
+        | 'TGTG(G\|T)ATAAC'                                                            | https://doi.org/10.1016/0022-2836(85)90299-2 |  1985  | Matsui-box                                        |
+        | 'TTAT(A\|T\|C\|G)CACA'                                                       | https://doi.org/10.1093/dnares/dsm017        |  2007  | In (roughly) all eubacteria, not just B. subtilis |
+        | 'TTATCCACA', 'TTTTCCACA', 'TTATCAACA', 'TCATTCACA', 'TTATACACA', 'TTATCCAAA' | https://doi.org/10.1093/emboj/16.21.6574     |  1997  | Affinity study                                    |
+        | '(T\|C)(T\|C)(A\|T\|C)T(A\|C)C(A\|G)(A\|C\|T)(A\|C)'                         | https://doi.org/10.1007/BF00273584           |  1991  | Only in E. coli K12. Do not use.                  |
+        """
 
         if max_mismatches == 0:
             return box_list
@@ -416,6 +411,22 @@ class ORCA:
         return [1 - x for x in np.mean(norm_mat, axis=1)]
 
 
+    def plot_oriC_curves(self):
+        """
+        Plot curves relevant to ORCA's analysis as well as all found oriCs.
+        To be called after calling `find_oriCs` on an ORCA object.
+        See utils.Plotter for more plotting options.
+        
+        --------------------------------
+        Example
+
+        >>> orca = ORCA.from_accession("NC_example.3", "your@email.com")
+        >>> orca.find_oriCs()
+        >>> orca.plot_oriC_curves()
+        """
+        Plotter.plot_x_curves([self.x, self.y, self.gc], self.oriC_middles, ['$x_n$', '$y_n$', '$g_n$'])
+
+
     def find_oriCs(self, show_info: bool = False, show_plot: bool = False) -> None:
         '''
         Locates potential oriCs on circular bacterial chromosomes based on Z-curve and GC-skew analysis, dnaA box analysis, and dnaA/dnaN gene locations.
@@ -539,8 +550,7 @@ class ORCA:
             print('D-scores    :', D_scores)
             print('oriCs       :', oriC_middles)
         if show_plot:
-            pf.plot_Z_curve_2D([self.x, self.y, self.gc], oriC_middles, ['$x_n$', '$y_n$', '$g_n$'])
-
+            self.plot_oriC_curves()
 
 if __name__ == '__main__':
     import joblib

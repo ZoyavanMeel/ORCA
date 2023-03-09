@@ -154,3 +154,6 @@ cython_debug/
 
 # VS Code settings
 .vscode
+
+# local folder
+old_orca

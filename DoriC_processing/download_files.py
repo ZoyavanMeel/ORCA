@@ -2,8 +2,8 @@ import sys, os
 import multiprocessing as mp
 from functools import partial
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
-from helper_functions import download
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from old_orca.helper_functions import download
 
 EMAIL    = 'youremail@here.com'
 API_KEY  = None # API_key highly recommeneded
