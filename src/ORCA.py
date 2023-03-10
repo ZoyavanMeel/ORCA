@@ -320,6 +320,7 @@ class ORCA:
         k = len(self.dnaa_boxes[0])
         x, y, z, gc = [], [], [], []
         a, c, t, g  = 0, 0, 0, 0
+        at = []
 
         raw_dict = {}
 
@@ -411,7 +412,7 @@ class ORCA:
         return [1 - x for x in np.mean(norm_mat, axis=1)]
 
 
-    def plot_oriC_curves(self):
+    def plot_oriC_curves(self) -> None:
         """
         Plot curves relevant to ORCA's analysis as well as all found oriCs.
         To be called after calling `find_oriCs` on an ORCA object.
@@ -424,7 +425,7 @@ class ORCA:
         >>> orca.find_oriCs()
         >>> orca.plot_oriC_curves()
         """
-        Plotter.plot_x_curves([self.x, self.y, self.gc], self.oriC_middles, ['$x_n$', '$y_n$', '$g_n$'])
+        Plotter.plot_x_curves([self.x, self.y, self.gc], self.oriC_middles, ['$x_n$', '$y_n$', '$GC_n$'])
 
 
     def find_oriCs(self, show_info: bool = False, show_plot: bool = False) -> None:
@@ -560,4 +561,4 @@ if __name__ == '__main__':
     model = joblib.load("Machine_learning/75_train_model.pkl")
 
     orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
-    orca.find_oriCs(True)
+    orca.find_oriCs(True, True)

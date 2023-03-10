@@ -53,8 +53,8 @@ def plot_x_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str]
     ything = thing*2
 
     color_list = ['r', 'b', 'g', 'c']
-    fig = plt.figure(figsize=(8,4))
-    fig.subplots_adjust(right=0.75, bottom=0.25)
+    fig = plt.figure(figsize=(8.5,4))
+    fig.subplots_adjust(right=0.85 - (0.1 * max(len(curves)-2, 0)), bottom=0.25)
     base_ax = plt.axes()
     ax_list = [base_ax] + [base_ax.twinx() for i in range(len(curves) - 1)]
 
