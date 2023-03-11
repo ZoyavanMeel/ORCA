@@ -6,8 +6,12 @@ import numpy as np
 class Peak():
     def __init__(self, middle: int, seq_len: int, window_size: int) -> "Peak":
         '''
-        five_side  : 5' side of the window
-        three_side : 3' side of the window.
+        Peak object for keeping track of points with a window (i.e. border/buffer) surrounding them.
+        Expected behaviour is that `self.middle` is always in the middle position between `self.five_side` and `self.three_side`.
+        - `five_side`  : 5' side of the window.
+        - `three_side` : 3' side of the window.
+
+        Alternate constructors include: `from_calc_middle` and `from_edges`.
         '''
         self.middle = middle
         self.seq_len = seq_len
