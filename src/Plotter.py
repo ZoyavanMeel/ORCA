@@ -5,15 +5,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_Z_curve_3D(Z_curve: tuple[np.ndarray, np.ndarray, np.ndarray], name: str = None) -> None:
+def plot_Z_curve_3D(x: np.ndarray, y: np.ndarray, z: np.ndarray, name: str = None) -> None:
     """
-    3D-plot function with name as title
+    3D-plot function with name as title. `x`, `y`, and `z` should be the three components of the Z-curve.
     
     -----------------------------------------------------------------------
     Example
     >>> orca = ORCA.from_accession('NC_000913', 'example@email.com')
     >>> orca.find_oriCs()
-    >>> plot_Z_curve_3D(Z_curve=[orca.x, orca.y, orca.z], name=orca.accession)
+    >>> plot_curves_3D(orca.x, orca.y, orca.z, name=orca.accession)
     """
     fig = plt.figure(figsize=(7,7))
     ax = plt.axes(projection='3d')
@@ -21,7 +21,6 @@ def plot_Z_curve_3D(Z_curve: tuple[np.ndarray, np.ndarray, np.ndarray], name: st
     ax.set_ylabel('Amino vs. Keto', fontsize=10, labelpad=15)
     ax.set_zlabel('Weak vs. Strong H-bond', fontsize=10, labelpad=15)
 
-    x, y, z = Z_curve
     ax.plot3D(x, y, z, c='b', linewidth=0.8)
     if name is not None:
         ax.set_title(f'Z-Curve: {name}', fontsize=10, loc='center', pad=20)
@@ -29,9 +28,10 @@ def plot_Z_curve_3D(Z_curve: tuple[np.ndarray, np.ndarray, np.ndarray], name: st
 
 
 @staticmethod
-def plot_x_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str], name: str = None) -> None:
+def plot_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str], name: str = None) -> None:
     """
-    Plots up to 4 different y-axes onto a single figure. Ideal for displaying multiple disparity curves in a single plot.
+    Plots up to 6 different y-axes onto a single figure. Ideal for displaying multiple disparity curves in a single plot.
+    If displaying more than 3 diferent axes at once, some manual adjustment of the subplot paramenters might be needed.
     - `curves` : list of lists with y-axis values.
     - `peaks`  : list with indeces to plot onto the `curves`.
     - `labels` : list of names of each curve in `curves`.
@@ -41,7 +41,7 @@ def plot_x_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str]
     Example
     >>> orca = ORCA.from_accession('NC_000913', 'example@email.com')
     >>> orca.find_oriCs()
-    >>> plot_Z_curve_2D(curves=[orca.x, orca.y, orca.gc], peaks=orca.oriC_middles, labels=['$x_n$', '$y_n$', '$g_n$'], name=orca.accession)
+    >>> plot_curves(curves=[orca.x, orca.y, orca.gc], peaks=orca.oriC_middles, labels=['$x_n$', '$y_n$', '$GC_n$'], name=orca.accession)
     """
     x_len = str(len(curves[0]))
     if int(x_len[1]) <= 4:
@@ -52,7 +52,9 @@ def plot_x_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str]
     xthing = thing * 100
     ything = thing*2
 
-    color_list = ['r', 'b', 'g', 'c']
+    # color_list = ['r', 'b', 'g', 'c']
+    color_list = ['#e31a1c', '#1f77b4', '#33a02c', '#6a3d9a', '#ff7f00', '#b15928']
+
     fig = plt.figure(figsize=(8.5,4))
     fig.subplots_adjust(right=0.85 - (0.1 * max(len(curves)-2, 0)), bottom=0.25)
     base_ax = plt.axes()

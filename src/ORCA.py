@@ -425,7 +425,7 @@ class ORCA:
         >>> orca.find_oriCs()
         >>> orca.plot_oriC_curves()
         """
-        Plotter.plot_x_curves([self.x, self.y, self.gc], self.oriC_middles, ['$x_n$', '$y_n$', '$GC_n$'])
+        Plotter.plot_curves([self.x, self.y, self.gc], self.oriC_middles, ['$x_n$', '$y_n$', '$GC_n$'])
 
 
     def find_oriCs(self, show_info: bool = False, show_plot: bool = False) -> None:
