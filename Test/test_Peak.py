@@ -373,6 +373,13 @@ class TestPeak(ut.TestCase):
         self.assertFalse(self.a.contains_point(self.d))
 
 
+    def test_contains(self):
+        self.assertTrue(40 in self.a)
+        self.assertTrue(self.b in self.a)
+        self.assertTrue(self.a in self.b)
+        self.assertFalse(self.d in self.a)
+
+
     def test_hash(self):
         b = Peak(60, 1000, 60)
         self.assertEqual(hash(self.a), hash(b))

@@ -219,7 +219,7 @@ class Peak():
         return x < y
 
 
-    def contains_point(self, point: Union[int, "Peak"]) -> bool:
+    def contains_point(self, point: Union["Peak", int, float]) -> bool:
         '''T|F wether a point is within a Peak's window'''
         p = point.middle if isinstance(point, Peak) else point
         return self.window_size // 2 >= Peak.calc_dist(self.middle, p, self.seq_len)
@@ -243,32 +243,44 @@ class Peak():
             and self.five_side == other.five_side \
             and self.three_side == other.three_side
 
+    def __contains__(self, point: Union["Peak", int, float]) -> bool:
+        """Return point in self's window. See: contains_point"""
+        return self.contains_point(point)
+
     def __repr__(self) -> str:
+        """Return repr(self)"""
         return f'Peak(middle={self.middle}, window_size={self.window_size}, seq_len={self.seq_len})'
 
     def __str__(self) -> str:
+        """Return str(self)"""
         return str(self.middle)
 
     def __lt__(self, other: "Peak") -> bool:
+        """Return self < other"""
         return self.middle < other.middle
 
     def __gt__(self, other: "Peak") -> bool:
+        """Return self > other"""
         return self.middle > other.middle
 
-    def __add__(self, other: "Peak") -> Union["Peak", int, float]:
+    def __add__(self, other: Union["Peak", int, float]) -> Union["Peak", int, float]:
+        """Return self + other"""
         if isinstance(other, Peak):
             return Peak(self.middle + other.middle, self.seq_len, self.window_size)
         elif isinstance(other, int) or isinstance(other, float):
             return self.middle + other
 
-    def __sub__(self, other: "Peak") -> Union["Peak", int, float]:
+    def __sub__(self, other: Union["Peak", int, float]) -> Union["Peak", int, float]:
+        """Return self - other"""
         if isinstance(other, Peak):
             return Peak(self.middle - other.middle, self.seq_len, self.window_size)
         elif isinstance(other, int) or isinstance(other, float):
             return self.middle - other
 
     def __radd__(self, other: "Peak") -> Union["Peak", int, float]:
+        """Return other + self"""
         return self.__add__(other)
 
     def __rsub__(self, other: "Peak") -> Union["Peak", int, float]:
+        """Return other - self"""
         return Peak(-self.middle, self.seq_len, self.window_size).__add__(other)
