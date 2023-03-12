@@ -320,7 +320,6 @@ class ORCA:
         k = len(self.dnaa_boxes[0])
         x, y, z, gc = [], [], [], []
         a, c, t, g  = 0, 0, 0, 0
-        at = []
 
         raw_dict = {}
 

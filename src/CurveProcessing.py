@@ -42,42 +42,53 @@ def detect_peaks(curve: np.ndarray) -> np.ndarray:
 def filter_peaks(curve: np.ndarray, mode: str, peaks: list[Peak]) -> list[Peak]:
     '''
     Filters the given peaks based on the type of extreme it should be and the area around the peak in two steps.
-    - Filter 1: Check if any windows intersect the window of another peak (circular DNA).
-    - Filter 2: Check if peaks are actually the extreme in their windows.\n
-    Input:
+    - Filter 1: Check if peaks are actually the extreme in their windows. This accounts for local extremes on the sides of slopes.
+    - Filter 2: Check if any windows intersect the window of another peak (circular DNA) and reject the one that was less extreme (min or max).
+    ### Input:
     - `curve`          : 1D-np.array
     - `peaks`          : list of Peaks of curve
-    - `mode`           : 'max'|'min'. Which type of extreme do you want to find?\n
-    Return:
-    - `accepted_peaks` : peaks that passed both filters
+    - `mode`           : 'max'|'min'. Which type of extreme do you want to find?
+    ### Return:
+    - `accepted_peaks` : list of peaks that passed both filters
     '''
     rejected_peaks = []
+    rejected_peaks.extend(_filter_within_windows(curve, mode, peaks))
+    rejected_peaks.extend(_filter_intersecting_windows(curve, mode, peaks))
+
+    # Return list of peaks that passed both filters
+    return list(set(peaks).difference(rejected_peaks))
+
+
+def _filter_within_windows(curve: np.ndarray, mode: str, peaks: list[Peak]):
+    """Filter 1: Check if peaks are actually the extreme in their windows"""
+    rejected = []
+    for peak in peaks:
+        if peak.split:
+            # Determine which side of 0 the peak.middle (m) is:
+            #     _______0                             0_______
+            #     5'   m    3'                      5'   m    3'
+            # -----------|-----------  vs.  -----------|-----------
+            comparator_win = curve[peak.five_side:] if (peak.middle > peak.five_side) else curve[:peak.three_side]
+        else:
+            comparator_win = curve[peak.five_side:peak.three_side]
+
+        if mode == 'max' and comparator_win.max() > curve[peak.middle]:
+                rejected.append(peak)
+        elif mode == 'min' and comparator_win.min() < curve[peak.middle]:
+                rejected.append(peak)
+    return rejected
+
+
+def _filter_intersecting_windows(curve, mode, peaks):
+    rejected = []
     for peak_i, peak_j in combinations(peaks, 2):
         # Filter 1: Check if any windows intersecting the window of peak i
         if peak_i.intersecting_windows(peak_j):
             # Either peaks at the beginning and end of the DNA sequence or a peak found by sp.find_peaks() that is very close to the global min/max 
             if mode == 'max' and curve[peak_i.middle] > curve[peak_j.middle]:
-                rejected_peaks.append(peak_j)
+                rejected.append(peak_j)
             elif mode == 'min' and curve[peak_i.middle] < curve[peak_j.middle]:
-                rejected_peaks.append(peak_j)
+                rejected.append(peak_j)
             else:
-                rejected_peaks.append(peak_i)
-
-    for peak in peaks:
-        # TODO: This second filter sucks wtf. Fix this...
-        # Filter 2: Check if peaks are actually the extreme in their windows
-        if peak.split:
-            a, b = (peak.five_side, len(curve)-1), (0, peak.three_side)
-            comparator_win = a if (peak.middle >= a[0] and peak.middle <= a[1]) else b
-        else:
-            comparator_win = (peak.five_side, peak.three_side)
-
-        if mode == 'max' and np.max( curve[comparator_win[0]:comparator_win[1]] ) > curve[peak.middle]:
-                rejected_peaks.append(peak)
-        elif mode == 'min' and np.min( curve[comparator_win[0]:comparator_win[1]] ) < curve[peak.middle]:
-                rejected_peaks.append(peak)
-
-    # Create list of peaks that passed both filters
-    rejected_peaks = set(rejected_peaks)
-    accepted_peaks = [x for x in peaks if x not in rejected_peaks]
-    return accepted_peaks
+                rejected.append(peak_i)
+    return rejected
