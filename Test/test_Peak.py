@@ -428,6 +428,10 @@ class TestPeak(ut.TestCase):
 
     def test_rsub(self):
         self.assertEqual(40, 100 - self.a)
+    
+
+    def test_neg(self):
+        self.assertEqual(Peak(-self.a.middle, self.a.seq_len, self.a.window_size), -self.a)
 
 
 if __name__ == '__main__':
