@@ -552,12 +552,17 @@ class ORCA:
         if show_plot:
             self.plot_oriC_curves()
 
-if __name__ == '__main__':
+
+def __main():
+    """Example showcase."""
     import joblib
 
-    acc = 'NC_000913'
     email = 'no_need_for_a_real@email_address.com'
     model = joblib.load("Machine_learning/75_train_model.pkl")
 
-    orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
-    orca.find_oriCs(True, True)
+    # orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
+    orca = ORCA.from_accession("NC_000913.3", email=email, model=model)
+    orca.find_oriCs(False, False)
+
+if __name__ == '__main__':
+    __main()
