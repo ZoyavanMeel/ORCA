@@ -1,0 +1,1 @@
+# python -m coverage run --source=src -m unittest discover -s test/ -p "test_*.py" | python -m coverage html
