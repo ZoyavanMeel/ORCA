@@ -235,7 +235,7 @@ class Peak():
             (self.middle, self.seq_len, self.window_size, self.split,
             self.five_side, self.three_side)
         )
-    
+
     def __eq__(self, other: "Peak") -> bool:
         '''Simple equality check. Is not used in __lt__ and __gt__'''
         if not isinstance(other, Peak):
@@ -258,6 +258,10 @@ class Peak():
     def __str__(self) -> str:
         """Return str(self)"""
         return str(self.middle)
+
+    def __neg__(self) -> "Peak":
+        """Returns -self with a Peak with negation of self.middle"""
+        return Peak(-self.middle, self.seq_len, self.window_size)
 
     def __lt__(self, other: "Peak") -> bool:
         """Return self < other"""
@@ -287,4 +291,4 @@ class Peak():
 
     def __rsub__(self, other: "Peak") -> Union["Peak", int, float]:
         """Return other - self"""
-        return Peak(-self.middle, self.seq_len, self.window_size).__add__(other)
+        return -self + other
