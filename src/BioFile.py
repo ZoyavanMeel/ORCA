@@ -132,7 +132,7 @@ def merge_csvs(file_folder: str, merged_csv: str, fieldnames: list[str], length:
         writer = csv.writer(fh_out)
         writer.writerow(fieldnames)
         for file in file_list:
-            with open(file_folder + file, 'r') as fh_in:
+            with open(os.path.join(file_folder, file), 'r') as fh_in:
                 reader = csv.reader(fh_in)
                 for i, row in enumerate(reader):
                     if headers and i == 0:
