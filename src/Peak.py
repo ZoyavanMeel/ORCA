@@ -49,12 +49,12 @@ class Peak():
         Calculates the middle of five_side and three_side and uses that as the middle 
         AND uses these edges to determine the window_size.
         '''
-        return cls( cls.calc_middle(five_side, three_side, seq_len), seq_len, cls.calc_dist(five_side, three_side, seq_len) )
+        return cls( cls.calc_middle(five_side, three_side, seq_len), seq_len, cls.calc_dist_points(five_side, three_side, seq_len) )
 
 
     @staticmethod
-    def calc_dist( a: int, b: int, curve_size: int) -> int:
-        '''Calculate the distance of self to other in bp'''
+    def calc_dist_points(a: int, b: int, curve_size: int) -> int:
+        '''Calculate the distance of a to b in bp on a circular chromosome.'''
         dist_1 = max(a, b) - min(a, b)
         dist_2 = min(a, b) + curve_size - max(a, b)
         return min(dist_1, dist_2)
@@ -116,7 +116,7 @@ class Peak():
             iterator = combinations(enumerate(peaks_a), r=2)
 
         for (i_a, a), (i_b, b) in iterator:
-            dist = Peak.calc_dist(a, b, seq_len) if are_integers else Peak.calc_dist(a.middle, b.middle, a.seq_len)
+            dist = Peak.calc_dist_points(a, b, seq_len) if are_integers else Peak.calc_dist_points(a.middle, b.middle, a.seq_len)
             adj_mat[i_a, i_b] = dist
             if peaks_b is None: adj_mat[i_b, i_a] = dist
         return adj_mat
@@ -218,7 +218,7 @@ class Peak():
         '''T|F wether self's window intersects with other's window.'''
         if not isinstance(other, Peak):
             raise ValueError(f'other is a {type(other)}, must be a Peak object')
-        x = Peak.calc_dist(self.middle, other.middle, self.seq_len)
+        x = Peak.calc_dist_points(self.middle, other.middle, self.seq_len)
         y = self.window_size//2 + other.window_size//2
         return x < y
 
@@ -226,8 +226,13 @@ class Peak():
     def contains_point(self, point: Union["Peak", int, float]) -> bool:
         '''T|F wether a point is within a Peak's window'''
         p = point.middle if isinstance(point, Peak) else point
-        return self.window_size // 2 >= Peak.calc_dist(self.middle, p, self.seq_len)
+        return self.window_size // 2 >= Peak.calc_dist_points(self.middle, p, self.seq_len)
 
+
+    def calc_dist(self, point_b: Union["Peak", int]):
+        """Calculate the distance between self and another point on a cicular chromosome."""
+        b = point_b.middle if isinstance(point_b, Peak) else point_b
+        return Peak.calc_dist_points(self.middle, b, self.seq_len)
 
     def __hash__(self) -> int:
         '''very simple hash function. Does not include scores'''

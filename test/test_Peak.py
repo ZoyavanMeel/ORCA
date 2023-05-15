@@ -46,13 +46,23 @@ class TestPeak(ut.TestCase):
         self.assertEqual(x, y)
 
 
+    def test_calc_dist_points_1(self):
+        res = Peak.calc_dist_points(self.a.middle, self.b.middle, self.a.seq_len)
+        self.assertEqual(res, 20)
+
+    
+    def test_calc_dist_points_2(self):
+        res = Peak.calc_dist_points(self.a.middle, self.d.middle, self.a.seq_len)
+        self.assertEqual(res, 160)
+
+
     def test_calc_dist_1(self):
-        res = Peak.calc_dist(self.a.middle, self.b.middle, self.a.seq_len)
+        res = self.a.calc_dist(self.b)
         self.assertEqual(res, 20)
 
     
     def test_calc_dist_2(self):
-        res = Peak.calc_dist(self.a.middle, self.d.middle, self.a.seq_len)
+        res = self.a.calc_dist(self.d.middle)
         self.assertEqual(res, 160)
 
 
