@@ -10,8 +10,8 @@ import BioFile as bf
 
 CLUSTER = "/tudelft.net/staff-umbrella/GeneLocations/ZoyavanMeel/ORCA/"
 
-INPUT_PATHS = [CLUSTER + 'data\input\DoriC_chromosome_circular.csv', CLUSTER + 'data\input\DoriC_complete_circular.csv']
-OUTPUT_PATH = bf.comp_path(CLUSTER + 'data\output\doric_set_no_model_orca_pkl')
+INPUT_PATHS = [CLUSTER + 'data/input/DoriC_chromosome_circular.csv', CLUSTER + 'data/input/DoriC_complete_circular.csv']
+OUTPUT_PATH = CLUSTER + 'data/output/doric_set_no_model_orca_pkl'
 
 EMAIL   = 'zoyavanmeel@gmail.com'
 API_KEY = '795d705fb638507c9b2295c89cc64ee88108'
@@ -22,7 +22,7 @@ def load_data(*paths) -> pd.DataFrame:
     '''Load data of given paths and concatenates them.'''
     df = pd.DataFrame()
     for path in paths:
-        df = pd.concat(objs=[df, pd.read_csv(bf.comp_path(path))], ignore_index=True, join='outer')
+        df = pd.concat(objs=[df, pd.read_csv(path)], ignore_index=True, join='outer')
     return df
 
 
