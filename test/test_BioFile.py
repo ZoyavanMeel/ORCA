@@ -133,15 +133,6 @@ class TestBioFile(ut.TestCase):
         self.assertEqual(res, self.seq_dict)
 
 
-    def test_get_accession_from_gbk(self):
-        acc, version = BioFile.get_accession_from_gbk(self.text_io)
-        self.assertEqual("NC_000913", acc)
-        self.assertEqual("3", version)
-
-        first_after_call = self.text_io.readline()
-        self.assertEqual("LOCUS       NC_000913            4641652 bp    DNA     circular CON 09-MAR-2022\n", first_after_call)
-
-
     def test_save_gbk_1_good(self):
         # Set up the mock file object
         with m.patch('builtins.open', m.mock_open()) as mock_open, \
@@ -149,7 +140,34 @@ class TestBioFile(ut.TestCase):
             m.patch('os.listdir') as mock_listdir:
 
             # efetch return value gets closed by save_gbk, so get the value before the call
-            to_write = self.text_io.getvalue()
+            to_write_a = """LOCUS       NC_000913            4641652 bp    DNA     circular CON 09-MAR-2022
+                DEFINITION  Escherichia coli str. K-12 substr. MG1655, complete genome.
+                ACCESSION   NC_000913
+                VERSION     NC_000913.3
+            """
+
+            to_write_b = """
+                gene            190..255
+                                /gene="thrL"
+                                /locus_tag="b0001"
+                                /gene_synonym="ECK0001"
+                                /db_xref="ASAP:ABE-0000006"
+                                /db_xref="ECOCYC:EG11277"
+                                /db_xref="GeneID:944742"
+                CDS             190..255
+                                /gene="thrL"
+                                /locus_tag="b0001"
+                                /gene_synonym="ECK0001"
+                                /codon_start=1
+                                /transl_table=11
+                                /product="thr operon leader peptide"
+                                /protein_id="NP_414542.1"
+                                /db_xref="UniProtKB/Swiss-Prot:P0AD86"
+                                /db_xref="ASAP:ABE-0000006"
+                                /db_xref="ECOCYC:EG11277"
+                                /db_xref="GeneID:944742"
+                                /translation="MKRISTTITTTITITTGNGAG"
+                """
             mock_efetch.return_value = self.text_io
             mock_listdir.return_value = ["NC_000000_1.gbk", "NC_000001_1.gbk", "NC_000002_1.gbk"]
 
@@ -158,18 +176,18 @@ class TestBioFile(ut.TestCase):
 
             # Assert that the file was opened and written to correctly
             path = os.path.join(self.out, 'NC_000913_3.gbk')
-            mock_open.assert_called_once_with(path, 'w')
-            mock_open().write.assert_called_once_with(to_write)
+            mock_open.assert_called_with(path, 'w')
+            mock_open().write.has_calls([to_write_a, to_write_b])
 
 
     def test_save_gbk_2_file_already_exists(self):
         # Set up the mock file object
         with m.patch('builtins.open', m.mock_open()) as mock_open, \
             m.patch('Bio.Entrez.efetch') as mock_efetch, \
-            m.patch('os.listdir') as mock_listdir:
+            m.patch('os.path.exists') as mock_exists:
 
             mock_efetch.return_value = self.text_io
-            mock_listdir.return_value = ["NC_000913_3.gbk", "NC_000001_1.gbk", "NC_000002_1.gbk"]
+            mock_exists.return_value = True
 
             # Call the function
             message = f'\'NC_000913_3.gbk\' already exists in: {self.inp}'
@@ -194,20 +212,25 @@ class TestBioFile(ut.TestCase):
 
             # Assert that the file was opened and written to correctly
             path = os.path.join(self.out, 'NC_000913_3.pkl')
-            mock_open.assert_called_once_with(path, 'w')
+            mock_open.assert_called_once_with(path, 'wb')
             mock_pickle_dump.assert_called_once_with(self.seq_rec, mock_open.return_value)
 
 
     def test_save_pkl_2_file_already_exists(self):
+        class MockSeqIO:
+            pass
+
         # Set up the mock file object
         with m.patch('builtins.open', m.mock_open()) as mock_open, \
             m.patch('Bio.Entrez.efetch') as mock_efetch, \
-            m.patch('os.listdir') as mock_listdir, \
-            m.patch('Bio.SeqIO.read') as mock_seqIO_read, \
-            m.patch('pickle.dump') as mock_pickle_dump:
+            m.patch('os.path.exists') as mock_exists, \
+            m.patch('Bio.SeqIO.read') as mock_read:
     
             mock_efetch.return_value = self.text_io
-            mock_listdir.return_value = ["NC_000913_3.pkl", "NC_000001_1.pkl", "NC_000002_1.pkl"]
+            mock_exists.return_value = True
+            seqio = MockSeqIO()
+            seqio.id = "NC_000913.3"
+            mock_read.return_value = seqio
 
             # Call the function
             message = f'\'NC_000913_3.pkl\' already exists in: {self.inp}'

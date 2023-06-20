@@ -1,7 +1,10 @@
+import os, sys, pickle
 from typing import Iterable
 import multiprocessing as mp
 from functools import partial
 import pandas as pd
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
 import BioFile as bf
 
@@ -22,17 +25,12 @@ def load_data(*paths) -> pd.DataFrame:
     return df
 
 
-def download_set(data: Iterable[str], output_path: str, cpus: int, email: str, api_key: str = None) -> None:
+def download_set(accessions: Iterable[str], output_path: str, cpus: int, email: str, api_key: str = None) -> None:
     downloader = partial(bf.save_pkl, email=email, api_key=api_key, output_folder=output_path)
     with mp.Pool(cpus) as pool:
-        pool.map(downloader, data)
+        pool.map(downloader, accessions)
 
 
 if __name__ == "__main__":
-    data = set(
-        load_data(*INPUT_PATHS)
-            .nc # column name
-            .astype('string')
-            .tolist()
-        )
-    download_set(data=data, output_path=OUTPUT_PATH, cpus=CPUS, email=EMAIL, api_key=API_KEY)
+    accessions = load_data(*INPUT_PATHS)["nc"].astype('string').to_list()
+    download_set(data=accessions, output_path=OUTPUT_PATH, cpus=CPUS, email=EMAIL, api_key=API_KEY)

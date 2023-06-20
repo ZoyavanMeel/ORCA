@@ -61,16 +61,27 @@ def save_gbk(accession: str, email: str, output_folder: str, api_key: str = None
     '''
     with fetch_file(accession, email, api_key, rettype="gbwithparts") as fh:
         # Quick search for the version of the accession that was downloaded.
-        _acc, version = get_accession_from_gbk(fh)
-        
+        acc_v = "."
+        header = ""
+        for line in fh:
+            # Underlying stream is not seekable, so cannot reset back to top of file
+            # -> need to keep track of what has been read
+            header += line
+            # Always appears around the top of the file.
+            if "VERSION" in line:
+                acc_v = [x for x in line.strip("\n").split(" ")][-1]
+                break
+        acc, version = tuple(acc_v.split("."))
+
         # Check if a file with the same name already exists
-        if any(file.startswith(_acc + '_' + version + '.gbk') for file in os.listdir(output_folder)):
+        if os.path.exists(os.path.join(output_folder, acc + '_' + version + '.gbk')):
             fh.close()
-            raise FileExistsError(f'\'{_acc}_{version}.gbk\' already exists in: {output_folder}')
-        
+            raise FileExistsError(f'\'{acc}_{version}.gbk\' already exists in: {output_folder}')
+
         # Save contents to path
-        file_path = os.path.join(output_folder, _acc + '_' + version + '.gbk')
+        file_path = os.path.join(output_folder, acc + '_' + version + '.gbk')
         with open(file_path, 'w') as oh:
+            oh.write(header)
             oh.write(fh.read())
             oh.close()
         fh.close()
@@ -84,36 +95,22 @@ def save_pkl(accession: str, email: str, output_folder: str, api_key: str = None
     If version is not provided in the accession, then the function downloads the latest version.
     '''
     with fetch_file(accession, email, api_key, rettype="gbwithparts") as fh:
-        # Quick search for the version of the accession that was downloaded.
-        _acc, version = get_accession_from_gbk(fh)
-        
-        # Check if a file with the same name already exists
-        if any(file.startswith(_acc + '_' + version + '.pkl') for file in os.listdir(output_folder)):
-            fh.close()
-            raise FileExistsError(f'\'{_acc}_{version}.pkl\' already exists in: {output_folder}')
-        
+
         # Parse gbk file
         seq_rec = SeqIO.read(fh, 'gb')
+        acc, version = seq_rec.id.split('.')
+        
+        # Check if a file with the same name already exists
+        if os.path.exists(os.path.join(output_folder, acc + '_' + version + '.pkl')):
+            fh.close()
+            raise FileExistsError(f'\'{acc}_{version}.pkl\' already exists in: {output_folder}')
         
         # Save contents to path
-        file_path = os.path.join(output_folder, _acc + '_' + version + '.pkl')
-        with open(file_path, 'w') as oh:
+        file_path = os.path.join(output_folder, acc + '_' + version + '.pkl')
+        with open(file_path, 'wb') as oh:
             pickle.dump(seq_rec, oh)
             oh.close()
         fh.close()
-
-
-def get_accession_from_gbk(fh: TextIO) -> tuple[str, str]:
-    """Reads the accession and version number from an open GenBank file."""
-    acc_v = "."
-    for line in fh:
-        # Always appears around the top of the file.
-        if "VERSION" in line:
-            acc_v = [x for x in line.strip("\n").split(" ")][-1]
-            break
-    # Reset read to top of file.
-    fh.seek(0)
-    return tuple(acc_v.split("."))
 
 
 def merge_csvs(file_folder: str, merged_csv: str, fieldnames: list[str], length: int = -1, headers: bool = False):
