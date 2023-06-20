@@ -11,7 +11,7 @@ OUTPUT_PATH = bf.comp_path('data\output\doric_set_no_model_orca_pkl')
 
 EMAIL   = 'zoyavanmeel@gmail.com'
 API_KEY = '795d705fb638507c9b2295c89cc64ee88108'
-CPUS    = 20
+CPUS    = 32
 
 
 def load_data(*paths) -> pd.DataFrame:
