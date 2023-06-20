@@ -34,4 +34,4 @@ def download_set(accessions: Iterable[str], output_path: str, cpus: int, email: 
 
 if __name__ == "__main__":
     accessions = load_data(*INPUT_PATHS)["nc"].astype('string').to_list()
-    download_set(data=accessions, output_path=OUTPUT_PATH, cpus=CPUS, email=EMAIL, api_key=API_KEY)
+    download_set(accessions=accessions, output_path=OUTPUT_PATH, cpus=CPUS, email=EMAIL, api_key=API_KEY)

@@ -103,6 +103,7 @@ def save_pkl(accession: str, email: str, output_folder: str, api_key: str = None
         # Check if a file with the same name already exists
         if os.path.exists(os.path.join(output_folder, acc + '_' + version + '.pkl')):
             fh.close()
+            return # temporary
             raise FileExistsError(f'\'{acc}_{version}.pkl\' already exists in: {output_folder}')
         
         # Save contents to path
