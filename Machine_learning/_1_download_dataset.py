@@ -8,9 +8,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 import BioFile as bf
 
+CLUSTER = "/tudelft.net/staff-umbrella/GeneLocations/ZoyavanMeel/ORCA/"
 
-INPUT_PATHS = ['data\input\DoriC_chromosome_circular.csv', 'data\input\DoriC_complete_circular.csv']
-OUTPUT_PATH = bf.comp_path('data\output\doric_set_no_model_orca_pkl')
+INPUT_PATHS = [CLUSTER + 'data\input\DoriC_chromosome_circular.csv', CLUSTER + 'data\input\DoriC_complete_circular.csv']
+OUTPUT_PATH = bf.comp_path(CLUSTER + 'data\output\doric_set_no_model_orca_pkl')
 
 EMAIL   = 'zoyavanmeel@gmail.com'
 API_KEY = '795d705fb638507c9b2295c89cc64ee88108'
