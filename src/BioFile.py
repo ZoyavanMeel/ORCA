@@ -1,6 +1,6 @@
 """Module for handing biodata files and whatnot."""
 
-import os, csv, pickle
+import os, csv, pickle, re
 
 from typing import TextIO, Union
 from urllib.error import HTTPError, URLError
@@ -142,4 +142,5 @@ def merge_csvs(file_folder: str, merged_csv: str, fieldnames: list[str], length:
 
 def comp_path(path: str) -> str:
     '''Re-join file paths so they are compatible with the current OS.'''
-    return os.path.join(*os.path.split(path))
+    dirs = re.split(r"\\|\\\\|\/", path)
+    return os.path.join(*dirs)
