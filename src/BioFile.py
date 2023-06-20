@@ -143,4 +143,6 @@ def merge_csvs(file_folder: str, merged_csv: str, fieldnames: list[str], length:
 def comp_path(path: str) -> str:
     '''Re-join file paths so they are compatible with the current OS.'''
     dirs = re.split(r"\\|\\\\|\/", path)
+    if path.startswith(("\\", "\\\\", "\/")):
+        return os.sep + os.path.join(*dirs)
     return os.path.join(*dirs)
