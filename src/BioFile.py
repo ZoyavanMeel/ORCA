@@ -141,3 +141,8 @@ def merge_csvs(file_folder: str, merged_csv: str, fieldnames: list[str], length:
                         break
                     else:
                         writer.writerow(row)
+
+
+def comp_path(path: str) -> str:
+    '''Re-join file paths so they are compatible with the current OS.'''
+    return os.path.join(*os.path.split(path))

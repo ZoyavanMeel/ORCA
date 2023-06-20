@@ -306,7 +306,7 @@ class ORCA:
         mismatch_boxes = list(set(boxes))
         for box in boxes:
             for i in range(abs(max_mismatches)):
-                mismatch_boxes.extend(list(generate_mismatched_strings(box, i+1)))
+                mismatch_boxes.extend(generate_mismatched_strings(box, i+1))
         return mismatch_boxes
 
 
@@ -553,11 +553,11 @@ class ORCA:
             self.plot_oriC_curves()
 
 
-def __main():
-    """Example showcase."""
+def example_use() -> None:
+    """Example showcase. See code"""
     import joblib
 
-    email = 'no_need_for_a_real@email_address.com'
+    email = 'real@email.address'
     model = joblib.load("Machine_learning/75_train_model.pkl")
 
     # orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
@@ -565,4 +565,4 @@ def __main():
     orca.find_oriCs(False, False)
 
 if __name__ == '__main__':
-    __main()
+    example_use()

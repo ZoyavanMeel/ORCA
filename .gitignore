@@ -155,5 +155,6 @@ cython_debug/
 # VS Code settings
 .vscode
 
-# local folder
+# local folders
 old_orca
+old_Machine_learning
