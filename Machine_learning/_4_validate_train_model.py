@@ -16,10 +16,11 @@ from sklearn.svm import SVC
 
 RANDOM_STATE = 42
 K            = 5
-PROCESSES    = 20 # Number of processes started by the gridsearch
+PROCESSES    = 32 # Number of processes started by the gridsearch
 
-DATA_PATH      = "data/output/machine_learning/labels.csv"
-MODEL_OUT_PATH = "data/output/machine_learning/24k_set_model.pkl"
+CLUSTER        = "/tudelft.net/staff-umbrella/GeneLocations/ZoyavanMeel/ORCA/"
+DATA_PATH      = CLUSTER + "data/output/machine_learning/labels.csv"
+MODEL_OUT_PATH = CLUSTER + "data/output/machine_learning/24k_set_model.pkl"
 
 
 def load_data_labels(path: str) -> tuple[pd.DataFrame, pd.Series]:
@@ -55,6 +56,7 @@ def main() -> None:
     model_parameters = {
         'C': [0.001, 0.1, 1, 5, 10, 30, 50, 60, 80, 100, 500, 1000], # 'degree' parameter might be added later, depends on preffered kernel (only used by 'poly')
         # 'degree': [i for i in range(10)],
+        'gamma': ['scale', 'auto', 0.1, 0.5, 1.0, 5.0, 10.0, 50.0, 100.0, 500.0, 1000],
         'kernel': ['linear', 'poly', 'sigmoid', 'rbf']  # 'precomputed' only works on NxN datasets
     }
 
