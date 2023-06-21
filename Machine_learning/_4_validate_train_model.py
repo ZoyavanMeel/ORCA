@@ -4,17 +4,19 @@ The cross-validation is stratified to keep the distributions of the train and te
 The best parameters are used to train the SVC on the entire dataset and is saved for use in ORCA.
 """
 
-import pandas as pd
-import numpy as np
-from sklearn.metrics import make_scorer, precision_score, recall_score, accuracy_score
-from sklearn.svm import SVC
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_validate
-from sklearn.preprocessing import StandardScaler
 import joblib
+import numpy as np
+import pandas as pd
+from sklearn.metrics import (accuracy_score, make_scorer, precision_score,
+                             recall_score)
+from sklearn.model_selection import (GridSearchCV, StratifiedKFold,
+                                     cross_validate)
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
 RANDOM_STATE = 42
 K            = 5
-PROCESSES    = 3 # Number of processes started by the gridsearch
+PROCESSES    = 20 # Number of processes started by the gridsearch
 
 DATA_PATH      = "data/output/machine_learning/labels.csv"
 MODEL_OUT_PATH = "data/output/machine_learning/24k_set_model.pkl"
@@ -24,9 +26,9 @@ def load_data_labels(path: str) -> tuple[pd.DataFrame, pd.Series]:
     df = pd.read_csv(path)
     X = df[['Z_score', 'G_score', 'D_score', 'total_pot']]
     
-    X = StandardScaler().fit(X).transform(X)
+    X_scaled = StandardScaler().fit_transform(X)
     y = df['correct']
-    return X, y
+    return X_scaled, y
 
 
 def validate_model(X: pd.DataFrame, y: pd.Series, classifier, k: int) -> dict:
@@ -65,6 +67,12 @@ def main() -> None:
         n_jobs=PROCESSES,
         verbose=1
     )
+
+    print()
+    print("best parameters: ")
+    for k, v in best_params.items():
+        print(k, v)
+    print()
 
     SVC_scores_tuned   = validate_model(X, y, SVC(**best_params), K)
     SVC_scores_default = validate_model(X, y, SVC(), K)
