@@ -1,4 +1,6 @@
-import os, sys, pickle
+"""Script for downloading all information for the given set of accession numbers and stores them as pickle files of Bio.SeqRecord objects."""
+
+import os, sys
 from typing import Iterable
 import multiprocessing as mp
 from functools import partial

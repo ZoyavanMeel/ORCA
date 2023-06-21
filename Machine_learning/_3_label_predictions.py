@@ -1,10 +1,11 @@
-"""This script is made in order to label the values of the ORCA scores according to the ground truths."""
+"""This script is made in order to label the values of the ORCA scores according to the ground truths (DoriC or experimentally verified)."""
+
 import os, sys
 import pandas as pd
 
-from _2_predict_dataset import predict_dataset
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+
+from _1_download_dataset import load_data
 from Peak import Peak
 
 pd.set_option('display.max_rows', 500)
@@ -12,41 +13,35 @@ pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
 
-##############################################################################################################################
-# TODO: SET THIS UP (20/06/2023)
-# You have only set up _1_ and _2_ so far.
+GROUND_TRUTHS        = ['data/input/DoriC_chromosome_circular.csv', 'data/input/DoriC_complete_circular.csv']
+INDICATOR_VALUES_CSV = "data/output/doric_set_no_model_orca.csv"
+OUT_FILE_LABELS      = "data/output/machine_learning/labels.csv"
 
 
-INPUT_PATH_ACC       = 'data\input\dataset.csv'   # Only used for getting the accession numbers.
-INPUT_PATH_GT        = 'data\input\dataset.csv'   # Ground-Truth values
-CSV_OUT_FOLDER       = 'data\output\experimental_set_predictions_orca'
-OUT_FILE_PREDICTIONS = "data\output\experimental_set_predictions_orca\orca.csv"
-OUT_FILE_LABELS      = "data\output\machine_learning\labels.csv"
-PARALLEL             = True                 # Whether to do parallel processing for the prediction step.
-CPUS                 = os.cpu_count() - 1   # Amount of CPUs to use if using parallel processing.
-MAX_ORICS            = 10                   # Assumption: No more than 10 oriC for a single organism are predicted
-
-EMAIL   = 'no_need_for_a_real@email_address.com'
-API_KEY = None
-MODEL   = None
-
-
-def label(indicator_values_csv: str, ground_truth_csv: str, output_csv: str) -> None:
+def label(indicator_values_csv: str, ground_truth_csvs: list[str], output_csv: str) -> None:
     """Compare all possible found oriCs by ORCA to the ground truth oriCs for the corresponding accession.
     If the predicted origin is further than 2.5% of the total genome length removed from the ground truth,
     it gets labelled as a `False` prediction. If it is within this distance, it gets labelled as a `True` prediction.
     
     This method outputs a CSV with the given name that can be used for training ML models."""
 
-    gt_df = pd.read_csv(ground_truth_csv)
+    gt_df = load_data(*ground_truth_csvs)
     iv_df = pd.read_csv(indicator_values_csv)
 
-    gt_df['middles'] = gt_df.apply(lambda x: Peak.calc_middle(x.begin, x.end, x.seq_len), axis=1)
+    gt_df.drop(labels=['oric_seq', 'lineage'], axis=1, inplace=True)
+    iv_df['nc'] = iv_df['accession'] + '.' + iv_df['version'].map(str)
+    
+    iv_df['nc'].astype('string')
+    gt_df['nc'].astype('string')
+
+    gt_df = gt_df.merge(iv_df, on='nc', how='right')[gt_df.columns.to_list() + ['seq_len']]
+
+    gt_df['middles'] = gt_df.apply(lambda x: Peak.calc_middle(x.oric_start, x.oric_end, x.seq_len), axis=1)
 
     label_dict = {
         'accession'    : [],
         'version'      : [],
-        'pot_oriC_num' : [],
+        'pot_oriC_num' : [], # e.g. if `total_pot` = 5, then pot_oriC_num is unique (1 through 5) for each of those 5 potential oriCs
         'Z_score'      : [],
         'G_score'      : [],
         'D_score'      : [],
@@ -72,7 +67,7 @@ def label(indicator_values_csv: str, ground_truth_csv: str, output_csv: str) -> 
             label_dict['total_pot'].append(len(ORCA_peaks))
 
             # Ground truth middle value. One accession can have multiple oriCs (e.g. bipartite oriC)
-            gt_middles = gt_df.loc[gt_df['accession'] == sample.accession]['middles']
+            gt_middles = gt_df.loc[gt_df['nc'] == sample['nc']]['middles']
 
             # Check correctness of each potential oriC and label them as such
             # Loop over each ground truth oriC in the accession (usually 1) to check if the potential oriC corresponds to any of them
@@ -89,8 +84,7 @@ def label(indicator_values_csv: str, ground_truth_csv: str, output_csv: str) -> 
 
 
 def main():
-    predict_dataset(INPUT_PATH_ACC, CSV_OUT_FOLDER, OUT_FILE_PREDICTIONS, PARALLEL, CPUS, MAX_ORICS, EMAIL, API_KEY, MODEL)
-    label(OUT_FILE_PREDICTIONS, INPUT_PATH_GT, OUT_FILE_LABELS)
+    label(INDICATOR_VALUES_CSV, GROUND_TRUTHS, OUT_FILE_LABELS)
 
 
 if __name__ == '__main__':

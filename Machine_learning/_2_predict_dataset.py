@@ -1,4 +1,5 @@
-# Standard imports
+"""Script for predicting a large dataset using ORCA. This script assumes all data to be in a folder of pickle files."""
+
 import multiprocessing as mp
 from functools import partial
 import os, sys, csv, joblib
