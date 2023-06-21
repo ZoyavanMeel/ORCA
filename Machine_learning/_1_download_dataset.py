@@ -28,8 +28,15 @@ def load_data(*paths) -> pd.DataFrame:
     return df
 
 
+def save_pkl_wrapper(accession: str, email: str, api_key: str, output_folder: str) -> None:
+    try:
+        bf.save_pkl(accession=accession, email=email, api_key=api_key, output_folder=output_folder)
+    except FileExistsError:
+        return
+
+
 def download_set(accessions: Iterable[str], output_path: str, cpus: int, email: str, api_key: str = None) -> None:
-    downloader = partial(bf.save_pkl, email=email, api_key=api_key, output_folder=output_path)
+    downloader = partial(save_pkl_wrapper, email=email, api_key=api_key, output_folder=output_path)
     with mp.Pool(cpus) as pool:
         pool.map(downloader, accessions)
 

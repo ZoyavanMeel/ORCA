@@ -142,6 +142,12 @@ class ORCA:
         --------
         - `ORCA` : an ORCA object with properly loaded parameters.
 
+        Raises:
+        -------
+        - `FileNotFoundError` : in case the file is not found at `path` 
+        - `EOFError`          : in case of faulty/empty Pickle file.
+        - `ValueError`        : in case the pickled object is not a SeqRecord.
+
         --------------------------
         Example:
         --------
@@ -158,10 +164,15 @@ class ORCA:
         orca.__make(**kwargs)
 
         with open(path,"rb") as fh:
-            record = pickle.load(fh)
+            try:
+                record = pickle.load(fh)
+            except EOFError as eof:
+                eof.add_note(f"Something is wrong with your Pickle file. It is probably empty. ORCA was unable to load: \'{path}\'.")
+                fh.close()
+                raise
             fh.close()
             if not isinstance(record, SeqIO.SeqRecord):
-                raise ValueError("Pickled object must be a SeqRecord object")
+                raise ValueError(f"Pickled object must be a SeqRecord object, but was a \'{type(record)}\' instead.")
             file_args = BioFile.parse_SeqRecord(record, orca.genes_of_interest)
             for key, value in file_args.items():
                 setattr(orca, key, value)

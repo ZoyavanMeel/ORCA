@@ -35,7 +35,10 @@ def predict_pkl_to_csv(path: str, csv_path: str, max_oriCs: int):
     if os.path.exists(out_file):
         return
 
-    orca = ORCA.from_pkl(path)
+    try:
+        orca = ORCA.from_pkl(path)
+    except EOFError:
+        return
     orca.find_oriCs()
 
     row = []
