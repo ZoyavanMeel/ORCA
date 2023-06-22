@@ -4,7 +4,9 @@ The cross-validation is stratified to keep the distributions of the train and te
 The best parameters are used to train the SVC on the entire dataset and is saved for use in ORCA.
 """
 
+import gzip
 import os
+import pickle
 import time
 from typing import Callable
 
@@ -32,6 +34,8 @@ MODEL_OUT_PATH    = "data/output/machine_learning/24k_set_model.pkl"
 
 def load_data_labels_from_path(path: str) -> tuple[pd.DataFrame, pd.Series]:
     df = pd.read_csv(path)
+    # !!! Keep this column order! This is the same order as ORCA will input the features when trying to predict.
+    # ORCA uses a model trained on numpy array instead of a pandas dataframe.
     X = df[['Z_score', 'G_score', 'D_score', 'total_pot']]
     
     # Feature-scaling does not provide any better performance
@@ -227,6 +231,10 @@ def main_DoriC_vs_exp_set() -> None:
 def main_save_model() -> None:
     X, y = load_data_labels_from_path(DATA_PATH_DORIC)
 
+    
+    X = X.to_numpy()
+    y = y.to_numpy()
+
     RFC_params = {
         'n_estimators': 600,
         'min_samples_split': 2,
@@ -238,6 +246,9 @@ def main_save_model() -> None:
 
     RFC_model = RandomForestClassifier(random_state=RANDOM_STATE, **RFC_params)
     RFC_model.fit(X, y)
+    with gzip.open(MODEL_OUT_PATH + ".gz", "wb") as fh:
+        pickle.dump(RFC_model, fh)
+
     joblib.dump(RFC_model, MODEL_OUT_PATH)
 
 

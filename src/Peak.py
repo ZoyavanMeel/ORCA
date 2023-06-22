@@ -18,10 +18,10 @@ class Peak():
         self.window_size = window_size
         self.split = False
 
-        self.z_score = 0
-        self.g_score = 0
-        self.d_score = 0
-        self.decision = 0
+        self.z_score: int = 0
+        self.g_score: int = 0
+        self.d_score: int = 0
+        self.decision: bool = None
 
         five_side = self.middle - self.window_size // 2
         three_side = self.middle + self.window_size // 2
@@ -233,6 +233,7 @@ class Peak():
         """Calculate the distance between self and another point on a cicular chromosome."""
         b = point_b.middle if isinstance(point_b, Peak) else point_b
         return Peak.calc_dist_points(self.middle, b, self.seq_len)
+
 
     def __hash__(self) -> int:
         '''very simple hash function. Does not include scores'''

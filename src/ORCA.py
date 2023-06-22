@@ -1,14 +1,14 @@
 # Libraries
-import os, warnings, pickle, re
-from itertools import product, combinations
+import os, pickle, re, warnings
+from itertools import combinations, product
 from typing import Generator
 
 import numpy as np
-from sklearn.base import is_classifier
 from Bio import Seq, SeqIO
+from sklearn.base import is_classifier
 
 # Self-made modules
-import CurveProcessing, BioFile, Plotter
+import BioFile, CurveProcessing, Plotter
 from Peak import Peak
 
 
@@ -536,7 +536,8 @@ class ORCA:
         # Step 5: Machine Learning model decision function.
         decisions = [None for i in range(len(oriCs))]
         if self.model is not None:
-            decisions = self.model.decision_function(np.asarray([Z_scores, G_scores, D_scores]).T).tolist()
+            total_pot_oriCs = [len(oriCs)] * len(oriCs)
+            decisions = self.model.predict(np.asarray([Z_scores, G_scores, D_scores, total_pot_oriCs]).T).tolist()
         oriC_middles = [oriC.middle for oriC in oriCs]
 
         # Step 6: Setting the last variables to the proper values
@@ -564,16 +565,20 @@ class ORCA:
             self.plot_oriC_curves()
 
 
-def example_use() -> None:
+def example_use() -> ORCA:
     """Example showcase. See code"""
     import joblib
 
     email = 'real@email.address'
-    model = joblib.load("Machine_learning/75_train_model.pkl")
+
+    # Provided model is compressed due to GitHub's file size limits.
+    # Pickle file for the provided model is around 189 MB uncompressed and 30 MB compressed
+    model = joblib.load("data/output/machine_learning/24k_set_model.pkl.gz")
 
     # orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
-    orca = ORCA.from_accession("NC_000913.3", email=email, model=model)
-    orca.find_oriCs(False, False)
+    orca = ORCA.from_accession("NC_003272.1", email=email, model=model)
+    orca.find_oriCs(show_info=True, show_plot=False)
+    return orca
 
 if __name__ == '__main__':
     example_use()
