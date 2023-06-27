@@ -83,5 +83,43 @@ class TestORCA(ut.TestCase):
         ...
 
 
+    def test_check_run_properly_1(self):
+        orca = ORCA()
+        with self.assertRaises(AttributeError) as context:
+            orca.find_oriCs()
+
+        exp_msg = "'ORCA' object has no attribute 'accession'"
+        exp_note = "This object has not been instantiated properly."
+
+        self.assertRegex(exp_msg, str(context.exception))
+        self.assertRegex(exp_note, context.exception.__notes__[0])
+
+
+
+    def test_check_run_properly_2(self):
+        orca = ORCA.from_string(self.seq, gene_locations=self.gene_locs, accession="test")
+        with self.assertRaises(AttributeError) as context:
+            orca.plot_oriC_curves()
+
+        exp_msg = "'ORCA' object has no attribute 'oriC_middles'"
+        exp_note = "Cannot plot curves."
+
+        self.assertRegex(exp_msg, str(context.exception))
+        self.assertRegex(exp_note, context.exception.__notes__[0])
+
+
+
+    def test_check_run_properly_3(self):
+        orca = ORCA.from_string(self.seq, gene_locations=self.gene_locs, accession="test")
+        with self.assertRaises(AttributeError) as context:
+            orca.pretty_print_results()
+
+        exp_msg = "'ORCA' object has no attribute 'oriC_middles'"
+        exp_note = "Cannot print results."
+
+        self.assertRegex(exp_msg, str(context.exception))
+        self.assertRegex(exp_note, context.exception.__notes__[0])
+
+
 if __name__ == "__main__":
     ut.main()

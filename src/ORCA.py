@@ -411,7 +411,6 @@ class ORCA:
 
     def calculate_G_scores(self, peaks: list[Peak]) -> list[int]:
         '''Process the location of the genes of interest and rank the potential oriCs based on how close they are to these genes'''
-        # LOOK INTO THIS: what if all genes of interest are far apart?
         if len(self.gene_locations) == 0:
             return [0] * len(peaks)
         gene_peaks = [name_loc_tuple[1] for name_loc_tuple in self.gene_locations]
@@ -422,6 +421,33 @@ class ORCA:
         return [1 - x for x in np.mean(norm_mat, axis=1)]
 
 
+    def __check_run_properly(self, attr: str, msg: str) -> None:
+        """Used internally to check if the ORCA object has the proper attributes it needs at certain stages."""
+        try: 
+            getattr(self, attr)
+        except AttributeError as NotRunYet:
+            NotRunYet.add_note(msg)
+            raise
+
+
+    def pretty_print_results(self) -> None:
+        """Print the main ORCA results in a pretty way."""
+        self.__check_run_properly("oriC_middles", "Cannot print results.")
+
+        spacer_1 = len('oriC_middles')+1
+        spacer_2 = len(str(max(self.oriC_middles)))+2
+
+        print(f'{"Accession":<{spacer_1}}: {self.accession}')
+
+        attrs = ['predictions', 'Z_scores', 'G_scores', 'D_scores', 'oriC_middles']
+        for attr in attrs:
+            if isinstance(getattr(self, attr)[0], float):
+                results = ''.join(f'{round(x, spacer_2-4):{" "}>{spacer_2}}' for x in getattr(self, attr))
+            else:
+                results = ''.join(f'{str(x):{" "}>{spacer_2}}' for x in getattr(self, attr))
+            print(f'{attr:<{spacer_1}}:{results}')
+
+
     def plot_oriC_curves(self) -> None:
         """
         Plot curves relevant to ORCA's analysis as well as all found oriCs.
@@ -429,12 +455,19 @@ class ORCA:
         See utils.Plotter for more plotting options.
         
         --------------------------------
-        Example
+        Example:
 
         >>> orca = ORCA.from_accession("NC_example.3", "your@email.com")
         >>> orca.find_oriCs()
         >>> orca.plot_oriC_curves()
+
+        The same as calling:
+
+        >>> orca = ORCA.from_accession('NC_000913', 'example@email.com')
+        >>> orca.find_oriCs()
+        >>> plot_curves(curves=[orca.x, orca.y, orca.gc], peaks=orca.oriC_middles, labels=['$x_n$', '$y_n$', '$GC_n$'], name=orca.accession)
         """
+        self.__check_run_properly("oriC_middles", "Cannot plot curves.")
         Plotter.plot_curves([self.x, self.y, self.gc], self.oriC_middles, ['$x_n$', '$y_n$', '$GC_n$'])
 
 
@@ -509,6 +542,8 @@ class ORCA:
         NC_example.3
         '''
 
+        self.__check_run_properly("accession", "This object has not been instantiated properly.")
+
         # Step 1: Calculate disparity curves + finding dnaA-box regions
         self.calculate_disparity_curves()
 
@@ -555,12 +590,7 @@ class ORCA:
         self.predictions = decisions
 
         if show_info:
-            print('Accession   :', self.accession)
-            print('Predictions :', decisions)
-            print('Z-scores    :', Z_scores)
-            print('G-scores    :', G_scores)
-            print('D-scores    :', D_scores)
-            print('oriCs       :', oriC_middles)
+            self.pretty_print_results()
         if show_plot:
             self.plot_oriC_curves()
 
