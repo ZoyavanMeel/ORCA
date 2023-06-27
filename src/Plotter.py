@@ -42,17 +42,23 @@ def plot_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str], 
     >>> orca = ORCA.from_accession('NC_000913', 'example@email.com')
     >>> orca.find_oriCs()
     >>> plot_curves(curves=[orca.x, orca.y, orca.gc], peaks=orca.oriC_middles, labels=['$x_n$', '$y_n$', '$GC_n$'], name=orca.accession)
+
+    Alternatively call:
+
+    >>> orca = ORCA.from_accession('NC_000913', 'example@email.com')
+    >>> orca.find_oriCs()
+    >>> orca.plot_oriC_curves()
     """
     x_len = str(len(curves[0]))
     if int(x_len[1]) <= 4:
         x_max = x_len[0] + str(int(x_len[1])+(5-int(x_len[1]))) + '0'*len(x_len[2:])
     else:
         x_max = str(int(x_len[0])+1) + '0'*len(x_len[1:])
-    thing = int(x_max)//1000
+    thing = max(int(x_max)//1000, 1)
     xthing = thing * 100
     ything = thing*2
 
-    # color_list = ['r', 'b', 'g', 'c']
+    # Colourblind friendly list of colours, I think.
     color_list = ['#e31a1c', '#1f77b4', '#33a02c', '#6a3d9a', '#ff7f00', '#b15928']
 
     fig = plt.figure(figsize=(8.5,4))
@@ -63,6 +69,7 @@ def plot_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str], 
     offset = 1
     for axis in ax_list[1:]:
         axis.spines.right.set_position(("axes", offset))
+        axis.yaxis.get_offset_text().set_x(offset)
         offset += 0.2
 
     good = False
@@ -87,7 +94,7 @@ def plot_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str], 
         ax_list[i].plot(range(len(ax)), ax, color=color_list[i], zorder=2, label=labels[i])
         ax_list[i].scatter(peaks, peaks_y, marker='o', c='k', zorder=3, label='$\it{oriC}$')
         ax_list[i].tick_params(axis ='y', colors=color_list[i])
-        ax_list[i].ticklabel_format(axis='y', style='sci', useMathText=True)
+        ax_list[i].ticklabel_format(axis='y', style='sci', scilimits=(3, 3), useMathText=True)
 
         lbound = ything * round(min(ax)/ything)
         lower = lbound if min(ax) >= lbound else lbound - ything
