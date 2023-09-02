@@ -31,14 +31,15 @@ def fetch_file(accession: str, email: str, api_key: Union[str, None], rettype: s
 
 def parse_SeqRecord(record: SeqIO.SeqRecord, genes_of_interest: list[str]) -> dict:
     """Extracts the sequence and positions of the genes of interest from a SeqRecord."""
-    seq_dict = dict()
     accession, version = tuple(record.id.split('.'))
-    seq_dict.update({'accession': accession})
-    seq_dict.update({'version': int(version)})
-    seq_dict.update({'seq': str(record.seq)}) # I only use the sequence to loop over once. strings are much faster for this.
-    seq_dict.update({'seq_len': len(record.seq)})
-    seq_dict.update({'gene_locations': []})
-    seq_dict.update({'NCBI_oriC': []})
+    seq_dict = {
+        'accession': accession,
+        'version': int(version),
+        'seq': str(record.seq), # I only use the sequence to loop over once. strings are much faster for this.
+        'seq_len': len(record.seq),
+        'gene_locations': [],
+        'NCBI_oriC': []
+    }
 
     for feature in record.features:
         # is this feature a coding sequence and a gene and is its name something we are looking for?
