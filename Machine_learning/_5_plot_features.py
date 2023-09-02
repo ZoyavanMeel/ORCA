@@ -9,6 +9,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import auc
 
 MODEL_PATH = "data/output/machine_learning/24k_set_model.pkl.gz"
 DATA_PATH  = "data/output/machine_learning/labels.csv"
@@ -128,8 +129,36 @@ def plot_pairgrid() -> None:
     plt.show()
 
 
+def precision_recall_plot() -> None:
+
+    df = pd.read_csv("data/output/precision_recall/merged_precision_recall.csv").sort_values(by="threshold")
+
+    fig, ax = plt.subplots()
+    print("exp", auc(df["recall_exp"], df["precision_exp"]))
+    print("30", auc(df["recall_30"], df["precision_30"]))
+    ax.scatter(x=df["recall_exp"] * 100, y=df["precision_exp"] * 100, marker=".", c="r", label="experimental set")
+    ax.scatter(x=df["recall_30"] * 100, y=df["precision_30"] * 100, marker=".", c="b", label="30% set")
+
+    ax.set_axisbelow(True)
+    ax.set(
+        xlim=(0., 101), xticks=np.arange(0., 101, 10), xlabel="Recall (%)",
+        ylim=(0., 101), yticks=np.arange(0., 101, 10), ylabel="Precision (%)"
+    )
+
+    ax.grid(True, which='major', color='k', linestyle='-')
+    ax.legend(loc="lower left")
+    # ax.grid(True, which='minor', color='grey', linestyle='--')
+    # ax.grid(True, "both", zorder=0)
+
+    # for i, txt in df["threshold"][:-1].items():
+    #     ax.annotate(txt, (df[f"recall_{dataset}"][i], df[f"precision_{dataset}"][i]))
+
+    plt.minorticks_on()
+    plt.show()
+
 
 
 if __name__ == "__main__":
-    plot_pairgrid()
+    # plot_pairgrid()
     # reduce_dimensions_and_plot_them()
+    precision_recall_plot()
