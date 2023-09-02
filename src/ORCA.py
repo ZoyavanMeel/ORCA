@@ -584,7 +584,7 @@ class ORCA:
             warnings.warn(f'''Accession: {self.accession + "." + str(self.version)}.
                 No DnaA-boxes were found: {self.input_dnaa_boxes}
                 Allowed for {self.max_mismatches} mismatches.
-                Will not use DnaA-boxes in prediction.
+                This will affect the validity of the prediction!
             ''')
         D_scores = self.calculate_D_scores(oriCs)
 
@@ -592,7 +592,7 @@ class ORCA:
         if len(self.gene_locations) == 0:
             warnings.warn(f'''Accession: {self.accession + "." + str(self.version)}.
                 None of the genes of interest were found in the given data: {self.genes_of_interest}
-                Will not use gene locations in prediction.
+                This will affect the validity of the prediction!
             ''')
         G_scores = self.calculate_G_scores(oriCs)
 
