@@ -446,6 +446,7 @@ class ORCA:
             else:
                 results = ''.join(f'{str(x):{" "}>{spacer_2}}' for x in getattr(self, attr))
             print(f'{attr:<{spacer_1}}:{results}')
+        print("The best-scoring potential oriC was found at:", self.oriC_middles[self.best_oriC_idx], "bp.")
 
 
     def plot_oriC_curves(self) -> None:
@@ -469,6 +470,33 @@ class ORCA:
         """
         self.__check_run_properly("oriC_middles", "Cannot plot curves.")
         Plotter.plot_curves([self.x, self.y, self.gc], self.oriC_middles, ['$x_n$', '$y_n$', '$GC_n$'])
+
+
+    def _set_best_pot_oriC_idx(self) -> None:
+        """
+        Set the best performing potential oriC based on the model's prediction as well as a tie-breaking method.
+
+        Initially the potential oriC is chosen in which the model has the most "confidence", i.e. which one does
+        the model think is the most likely to be the True origin. This is determined by the highest probability of
+        "correctness" as calculated by the `predict_proba` function of the classifier.
+
+        In the case of a tie, we look at the highest score of the most important feature (Z-score) between the
+        tied potential oriCs. If this is also results in some form of tie, we check the next one, etc.
+        """
+
+        # set matrix columns to put them in order of feature importance: [prediction, Z-score, D-score, G-score]
+        if len(self.predictions) == 0 or self.predictions[0] is None:
+            mat = np.asarray([self.Z_scores, self.D_scores, self.G_scores]).T
+        else:
+            mat = np.asarray([self.predictions, self.Z_scores, self.D_scores, self.G_scores]).T
+        max_idx_options = [j for j in range(mat.shape[0])]
+
+        for i in range(mat.shape[1]):
+            max_idx_in_curr_col = np.where(mat[max_idx_options,i] == np.max(mat[max_idx_options,i]))[0].tolist()
+            max_idx_options = [max_idx_options[j] for j in max_idx_in_curr_col]
+            if len(max_idx_options) == 1:
+                break
+        self.best_oriC_idx = max_idx_options[0]
 
 
     def find_oriCs(self, show_info: bool = False, show_plot: bool = False) -> None:
@@ -572,7 +600,7 @@ class ORCA:
         decisions = [None for i in range(len(oriCs))]
         if self.model is not None:
             total_pot_oriCs = [len(oriCs)] * len(oriCs)
-            decisions = self.model.predict(np.asarray([Z_scores, G_scores, D_scores, total_pot_oriCs]).T).tolist()
+            decisions = self.model.predict_proba(np.asarray([Z_scores, G_scores, D_scores, total_pot_oriCs]).T)[:,1].tolist()
         oriC_middles = [oriC.middle for oriC in oriCs]
 
         # Step 6: Setting the last variables to the proper values
@@ -588,6 +616,7 @@ class ORCA:
         self.G_scores = G_scores
         self.D_scores = D_scores
         self.predictions = decisions
+        self._set_best_pot_oriC_idx()
 
         if show_info:
             self.pretty_print_results()
