@@ -193,14 +193,19 @@ class Peak():
 
 
     @staticmethod
-    def calc_middle(point_a: Union[int, "Peak"] , point_b: Union[int, "Peak"], curve_size: int = None) -> int:
+    def calc_middle(a: Union[int, "Peak"] , b: Union[int, "Peak"], curve_size: int = None) -> int:
         """
         Calculate the distance between Peak a and b on circular DNA.
         Returns a new Peak.middle (int) in the middle of a and b
         """
-        a = point_a if not isinstance(point_a, Peak) else point_a.middle
-        b = point_b if not isinstance(point_b, Peak) else point_b.middle
-        seq_len = point_a.seq_len if curve_size is None and isinstance(point_a, Peak) else curve_size
+
+        seq_len = a.seq_len if curve_size is None and isinstance(a, Peak) else curve_size
+        seq_len = b.seq_len if seq_len is None and isinstance(b, Peak) else seq_len
+
+        a, b = int(a), int(b)
+
+        if seq_len is None:
+            raise ValueError("No curve size found in any parameters. This method is for circular DNA only.")
 
         dist_1 = max(a, b) - min(a, b)
         dist_2 = min(a, b) + seq_len-1 - max(a, b)
@@ -298,3 +303,11 @@ class Peak():
     def __rsub__(self, other: "Peak") -> Union["Peak", int, float]:
         """Return other - self"""
         return -self + other
+
+    def __int__(self):
+        """Return int of self.middle"""
+        return int(self.middle)
+
+    def __float__(self):
+        """Return float of self.middle"""
+        return float(self.middle)

@@ -1,4 +1,3 @@
-
 """Module for plotting disparity curves."""
 
 import numpy as np
@@ -27,7 +26,6 @@ def plot_Z_curve_3D(x: np.ndarray, y: np.ndarray, z: np.ndarray, name: str = Non
     plt.show()
 
 
-@staticmethod
 def plot_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str], name: str = None) -> None:
     """
     Plots up to 6 different y-axes onto a single figure. Ideal for displaying multiple disparity curves in a single plot.
@@ -132,7 +130,6 @@ def plot_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str], 
     plt.show()
 
 
-@staticmethod
 def plot_skew(skewArray: np.ndarray, peaks: list[int], name: str) -> None:
     """Plots single skew diagram and its peaks"""
 
@@ -145,4 +142,3 @@ def plot_skew(skewArray: np.ndarray, peaks: list[int], name: str) -> None:
     ax1.plot(range(len(skewArray)), skewArray, 'r', zorder=1)
     ax1.scatter(peaks, peaks_y, marker='X', c='k', zorder=2)
     plt.show()
-
