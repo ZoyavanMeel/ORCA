@@ -2,7 +2,7 @@
 
 import os, csv, pickle
 
-from typing import TextIO, Union
+from typing import Optional, TextIO
 from urllib.error import HTTPError, URLError
 
 from Bio import SeqIO, Entrez
@@ -10,7 +10,7 @@ from Bio import SeqIO, Entrez
 from Peak import Peak
 
 
-def fetch_file(accession: str, email: str, api_key: Union[str, None], rettype: str) -> TextIO:
+def fetch_file(accession: str, email: str, api_key: Optional[str], rettype: str) -> TextIO:
     """Downloads the given file_type of the given accession in temporary memory"""
     Entrez.email = email
     if api_key is not None: Entrez.api_key = api_key
@@ -53,7 +53,7 @@ def parse_SeqRecord(record: SeqIO.SeqRecord, genes_of_interest: list[str]) -> di
     return seq_dict
 
 
-def save_gbk(accession: str, email: str, output_folder: str, api_key: str = None):
+def save_gbk(accession: str, email: str, output_folder: str, api_key: Optional[str]):
     '''
     Download the GenBank file of a given accession and save it into the output_folder.
     Name of the file will be: `{accession}_{version}.gbk`.
@@ -88,7 +88,7 @@ def save_gbk(accession: str, email: str, output_folder: str, api_key: str = None
         fh.close()
 
 
-def save_pkl(accession: str, email: str, output_folder: str, api_key: str = None):
+def save_pkl(accession: str, email: str, output_folder: str, api_key: Optional[str]):
     '''
     Download the GenBank file of a given accession, parses it with Biopython into a SeqRecord, and save it into the output_folder.
     Name of the file will be: `{accession}_{version}.pkl`.

@@ -54,7 +54,7 @@ def run_DoriC_full() -> None:
     # predicted values
     pv_df = pd.read_csv('data/output/doric_set_no_model_orca.csv')
     # ground truths
-    gt_df = pd.read_csv('data/input/dataset.csv')
+    gt_df = pd.read_csv('data/input/experimental_dataset.csv')
 
     gt_df['middles'] = gt_df.apply(lambda x: Peak.calc_middle(x.begin, x.end, x.seq_len), axis=1)
 

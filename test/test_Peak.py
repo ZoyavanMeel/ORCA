@@ -361,6 +361,11 @@ class TestPeak(ut.TestCase):
         self.assertEqual(Peak.calc_middle(self.a, self.g), 955)
 
 
+    def test_calc_middle_4(self):
+        with self.assertRaisesRegex(ValueError, "No curve size found in any parameters. This method is for circular DNA only."):
+            Peak.calc_middle(5, 3)
+
+
     def test_intersecting_windows_1(self):
         self.assertTrue(self.a.intersecting_windows(self.a))
         self.assertTrue(self.a.intersecting_windows(self.b))
@@ -442,6 +447,10 @@ class TestPeak(ut.TestCase):
 
     def test_neg(self):
         self.assertEqual(Peak(-self.a.middle, self.a.seq_len, self.a.window_size), -self.a)
+
+
+    def test_float(self):
+        self.assertEqual(float(self.a), 60.0)
 
 
 if __name__ == '__main__':

@@ -634,10 +634,12 @@ def example_use() -> ORCA:
     # Pickle file for the provided model is around 189 MB uncompressed and 30 MB compressed
     model = joblib.load("data/output/machine_learning/24k_set_model.pkl.gz")
 
-    # orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
-    orca = ORCA.from_accession("NC_003272.1", email=email, model=model)
+    orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
+    # orca = ORCA.from_accession("NC_003272.1", email=email, model=model)
     orca.find_oriCs(show_info=True, show_plot=False)
     return orca
 
 if __name__ == '__main__':
-    example_use()
+    orca = example_use()
+    print(dir(orca))
+    print(orca.NCBI_oriC)

@@ -296,11 +296,11 @@ class Peak():
         elif isinstance(other, int) or isinstance(other, float):
             return self.middle - other
 
-    def __radd__(self, other: "Peak") -> Union["Peak", int, float]:
+    def __radd__(self, other: Union["Peak", int, float]) -> Union["Peak", int, float]:
         """Return other + self"""
         return self.__add__(other)
 
-    def __rsub__(self, other: "Peak") -> Union["Peak", int, float]:
+    def __rsub__(self, other: Union["Peak", int, float]) -> Union["Peak", int, float]:
         """Return other - self"""
         return -self + other
 

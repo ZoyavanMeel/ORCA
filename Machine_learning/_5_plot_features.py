@@ -132,17 +132,20 @@ def plot_pairgrid() -> None:
 def precision_recall_plot() -> None:
 
     df = pd.read_csv("data/output/precision_recall/merged_precision_recall.csv").sort_values(by="threshold")
+    color_list = ['#e31a1c', '#1f77b4', '#33a02c', '#6a3d9a', '#ff7f00', '#b15928']
 
     fig, ax = plt.subplots()
     print("exp", auc(df["recall_exp"], df["precision_exp"]))
     print("30", auc(df["recall_30"], df["precision_30"]))
-    ax.scatter(x=df["recall_exp"] * 100, y=df["precision_exp"] * 100, marker=".", c="r", label="experimental set")
-    ax.scatter(x=df["recall_30"] * 100, y=df["precision_30"] * 100, marker=".", c="b", label="30% set")
+    ax.scatter(x=df["threshold"], y=df["precision_exp"], marker=".", c=color_list[1], label="Precision exp-set")
+    ax.scatter(x=df["threshold"], y=df["recall_exp"], marker=".", c=color_list[0], label="Recall exp-set")
+    ax.scatter(x=df["threshold"], y=df["precision_30"], marker=".", c=color_list[4], label="Precision 30%-set")
+    ax.scatter(x=df["threshold"], y=df["recall_30"], marker=".", c=color_list[2], label="Recall 30%-set")
 
     ax.set_axisbelow(True)
     ax.set(
-        xlim=(0., 101), xticks=np.arange(0., 101, 10), xlabel="Recall (%)",
-        ylim=(0., 101), yticks=np.arange(0., 101, 10), ylabel="Precision (%)"
+        xlim=(0., 1.01), xticks=np.arange(0., 1.01, 0.1), xlabel="Threshold",
+        ylim=(0., 1.01), yticks=np.arange(0., 1.01, 0.1), ylabel="Precision/Recall"
     )
 
     ax.grid(True, which='major', color='k', linestyle='-')
