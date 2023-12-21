@@ -163,7 +163,7 @@ class ORCA:
         orca = cls()
         orca.__make(**kwargs)
 
-        with open(path,"rb") as fh:
+        with open(path, "rb") as fh:
             try:
                 record = pickle.load(fh)
             except EOFError as eof:
@@ -442,9 +442,9 @@ class ORCA:
         attrs = ['predictions', 'Z_scores', 'G_scores', 'D_scores', 'oriC_middles']
         for attr in attrs:
             if isinstance(getattr(self, attr)[0], float):
-                results = ''.join(f'{round(x, spacer_2-4):{" "}>{spacer_2}}' for x in getattr(self, attr))
+                results = ''.join(f'{round(x, spacer_2-4): >{spacer_2}}' for x in getattr(self, attr))
             else:
-                results = ''.join(f'{str(x):{" "}>{spacer_2}}' for x in getattr(self, attr))
+                results = ''.join(f'{str(x): >{spacer_2}}' for x in getattr(self, attr))
             print(f'{attr:<{spacer_1}}:{results}')
         print("The best-scoring potential oriC was found at:", self.oriC_middles[self.best_oriC_idx], "bp.")
 
@@ -631,7 +631,8 @@ def example_use() -> ORCA:
     email = 'real@email.address'
 
     # Provided model is compressed due to GitHub's file size limits.
-    # Pickle file for the provided model is around 189 MB uncompressed and 30 MB compressed
+    # Pickle file for the provided model. Model is around 189 MB uncompressed and 30 MB compressed,
+    # so it is too large to upload to GitHub.
     model = joblib.load("data/output/machine_learning/24k_set_model.pkl.gz")
 
     orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
@@ -641,5 +642,3 @@ def example_use() -> ORCA:
 
 if __name__ == '__main__':
     orca = example_use()
-    print(dir(orca))
-    print(orca.NCBI_oriC)
