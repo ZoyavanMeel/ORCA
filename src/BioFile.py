@@ -1,7 +1,6 @@
 """Module for handing biodata files and whatnot."""
 
-import os, csv, pickle
-
+import os, csv, pickle, warnings
 from typing import Optional, TextIO
 from urllib.error import HTTPError, URLError
 
@@ -30,7 +29,11 @@ def fetch_file(accession: str, email: str, api_key: Optional[str], rettype: str)
 
 
 def parse_SeqRecord(record: SeqIO.SeqRecord, genes_of_interest: list[str]) -> dict:
-    """Extracts the sequence and positions of the genes of interest from a SeqRecord."""
+    """
+    Extracts the sequence and positions of the genes of interest from a SeqRecord.
+    Will throw a warning if the file was already annotated with an oriC. This oriC
+    is not used in the computation.
+    """
     accession, version = tuple(record.id.split('.'))
     seq_dict = {
         'accession': accession,
@@ -50,6 +53,7 @@ def parse_SeqRecord(record: SeqIO.SeqRecord, genes_of_interest: list[str]) -> di
         if feature.type == 'rep_origin':
             oriC = Peak.from_calc_middle(int(feature.location.start), int(feature.location.end), len(record.seq), 0)
             seq_dict['NCBI_oriC'].append( ('oriC', oriC) )
+            warnings.warn(f"{accession}.{version}: found an annotated oriC in the provided file. Saved in 'NCBI_oriC' attribute of the ORCA object.")
     return seq_dict
 
 
