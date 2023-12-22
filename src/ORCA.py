@@ -469,7 +469,7 @@ class ORCA:
         >>> plot_curves(curves=[orca.x, orca.y, orca.gc], peaks=orca.oriC_middles, labels=['$x_n$', '$y_n$', '$GC_n$'], name=orca.accession)
         """
         self.__check_run_properly("oriC_middles", "Cannot plot curves.")
-        Plotter.plot_curves([self.x, self.y, self.gc], ['$x_n$', '$y_n$', '$GC_n$'], self.oriC_middles)
+        Plotter.plot_curves([self.x, self.y, self.gc], ['$x_n$', '$y_n$', '$GC_n$'], self.oriC_middles, self.accession)
 
 
     def _set_best_pot_oriC_idx(self) -> None:
@@ -635,8 +635,8 @@ def example_use() -> ORCA:
     # so it is too large to upload to GitHub.
     model = joblib.load("data/output/machine_learning/24k_set_model.pkl.gz")
 
-    orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
-    # orca = ORCA.from_accession("NC_003272.1", email=email, model=model)
+    # orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
+    orca = ORCA.from_accession("NC_000964", email=email, model=model)
     orca.find_oriCs(show_info=True, show_plot=True)
     return orca
 

@@ -27,7 +27,7 @@ def plot_Z_curve_3D(x: np.ndarray, y: np.ndarray, z: np.ndarray, name: Optional[
     plt.show()
 
 
-def plot_curves(curves: tuple[np.ndarray], labels: list[str], peaks: Optional[list[int]], name: Optional[str]) -> None:
+def plot_curves(curves: tuple[np.ndarray], labels: list[str], peaks: Optional[list[int]], name: Optional[str] = None) -> None:
     """
     Plots up to 6 different y-axes onto a single figure. Ideal for displaying multiple disparity curves in a single plot.
     If displaying more than 3 diferent axes at once, some manual adjustment of the subplot paramenters might be needed.
