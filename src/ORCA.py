@@ -24,14 +24,14 @@ class ORCA:
         Else, provide a list of 9 base strings. See the `get_dnaa_boxes_with_mismatches` function for some more examples of dnaA-boxes.
         Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
     - `max_mismatches`:
-        - Maximum allowed mismatches allowed in a dnaa_box for it still to be read as such. Recommended: 0; recommended max: 2.
+        - Maximum allowed mismatches allowed in a dnaa_box for it still to be read as such. Recommended max: 2.
     - `genes_of_interest`:
-        - List of gene names to consider as 'oriC-proximal' and use for helping estimate the location of the oriC.
+        - List of gene names to consider as 'oriC-proximal' and use for helping estimate the location of the oriC. This parameter is case insensitive.
     - `max_point_spread`:
-        - Maximum distance between points in a group can have when looking for connected groups.
-        Default is 5 % of the total chromosome length
+        - Maximum distance between points in a group can have when looking for connected groups across the disparity curves.
+        Default is 5 % of the total chromosome length.
     - `windows`:
-        - The windows around around peaks of skew curves to consider. Defaults are 1, 3 and 5 % of the total chromosome length.
+        - The windows around peaks of skew curves to consider. Defaults are 1, 3, and 5 % of the total chromosome length. ORCA checks each of the given windows.
     - `model`:
         - A fitted scikit-learn classifier. Recommended to use the one provided on [GitHub](https://github.com/ZoyavanMeel/ORCA/).
     """
