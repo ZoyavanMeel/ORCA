@@ -33,7 +33,7 @@ def plot_curves(curves: tuple[np.ndarray], labels: list[str], peaks: Optional[li
     If displaying more than 3 diferent axes at once, some manual adjustment of the subplot paramenters might be needed.
     - `curves` : list of lists with y-axis values.
     - `labels` : list of names of each curve in `curves`.
-    - `peaks`  : optional, list with indeces to plot onto the `curves`.
+    - `peaks`  : optional, list with indices to plot onto the `curves`.
     - `name`   : optional, used in plot title.
 
     -----------------------------------------------------------------------

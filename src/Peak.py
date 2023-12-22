@@ -63,7 +63,7 @@ class Peak():
     @staticmethod
     def get_peaks_to_merge(peaks: list["Peak"]) -> list[tuple["Peak", "Peak"]]:
         """
-        Get the indeces that give the same value in the curve and are in eachothers window.
+        Get the indices that give the same value in the curve and are in eachothers window.
         Input:
         - `peaks`          : list of `Peaks` of a curve
         Return:

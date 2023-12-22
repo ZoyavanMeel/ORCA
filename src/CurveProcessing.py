@@ -31,7 +31,7 @@ def curve_combinations(peaks_list: tuple[list["Peak"]], seq_len: int) -> list:
 
 
 def detect_peaks(curve: np.ndarray) -> np.ndarray:
-    '''Calculates peaks of 1D-np.array and returns its indeces.'''
+    '''Calculates peaks of 1D-np.array and returns its indices.'''
     maxima, _ = find_peaks( curve, distance=curve.shape[0]//12)
     maxima    = np.append(maxima, curve.argmax())
     minima, _ = find_peaks( np.negative(curve), distance=curve.shape[0]//12)
