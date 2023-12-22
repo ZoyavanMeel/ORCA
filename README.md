@@ -43,7 +43,7 @@ This repository also includes a pickled `SeqRecord` of the *E. coli* K-12 chromo
 The parameters listed below are parameters that can be used as they are or can be fine-tuned for specific use cases. The standard parameters reflect ORCA's performance as shown in the application note. Retraining of the Random Forest Classifier is recommended if any parameters are changed. Otherwise the same performance as is the paper can not be guaranteed.
 
 - `dnaa_boxes`: If None, will use the consensus DnaA-box: `TTAT(A|C|G|T)CACA` (See Section: [DnaA](#dnaa)). Else, provide a list of 9 base strings. Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
-- `max_mismatches`: Maximum allowed mismatches allowed in a dnaa_box for it still to be read as such. Recommended max: 2. ORCA uses 2 for use with the consensus DnaA-box.
+- `max_mismatches`: Maximum allowed mismatches allowed in a dnaa_box for it still to be read as such. Recommended max: 2. ORCA uses 0 for use with the consensus DnaA-box.
 - `genes_of_interest`: List of gene names to consider as 'oriC-proximal' and use for helping estimate the location of the oriC. This parameter is case insensitive.
 - `max_point_spread`: Maximum distance between points in a group can have when looking for connected groups across the disparity curves. Default is 5 % of the total chromosome length.
 - `windows`: The windows around peaks of skew curves to consider. Defaults are 1, 3, and 5 % of the total chromosome length. ORCA checks each of the given windows.
@@ -95,7 +95,7 @@ This folder contains output from the various performance test we ran on ORCA. Th
 
 Useful acticles about DnaA(-boxes): [[1]](https://doi.org/10.1101/cshperspect.a012922), [[2]](https://doi.org/10.1093/nar/gkr832), [[3]](https://doi.org/10.3389/fmicb.2018.00319), [[4]](https://doi.org/10.1046/j.1365-2958.1996.6481362.x.).
 
-We use the first entry in the table below and allow for up to 2 mismatches in this sequence.
+We use the first entry in the table below and allow for 0 mismatches in this sequence.
 
 |                                Sequence                          |                    Paper                       | Year | Notes                            |
 | ---------------------------------------------------------------- | ---------------------------------------------- | ---- | -------------------------------- |
