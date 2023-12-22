@@ -213,7 +213,7 @@ class ORCA:
                 \tCreate an NCBI account at: https://www.ncbi.nlm.nih.gov/
                 \tGenerate an API_key at: https://www.ncbi.nlm.nih.gov/account/settings/ (optional)
             """)
-        with BioFile.fetch_file(accession, email, api_key, rettype='gbwithparts') as handle:
+        with BioFile.fetch_file(accession, email, rettype='gbwithparts', api_key=api_key) as handle:
             file_args = BioFile.parse_SeqRecord(SeqIO.read(handle, 'gb'), orca.genes_of_interest)
             handle.close()
             for key, value in file_args.items():
@@ -469,7 +469,7 @@ class ORCA:
         >>> plot_curves(curves=[orca.x, orca.y, orca.gc], peaks=orca.oriC_middles, labels=['$x_n$', '$y_n$', '$GC_n$'], name=orca.accession)
         """
         self.__check_run_properly("oriC_middles", "Cannot plot curves.")
-        Plotter.plot_curves([self.x, self.y, self.gc], self.oriC_middles, ['$x_n$', '$y_n$', '$GC_n$'])
+        Plotter.plot_curves([self.x, self.y, self.gc], ['$x_n$', '$y_n$', '$GC_n$'], self.oriC_middles)
 
 
     def _set_best_pot_oriC_idx(self) -> None:
@@ -637,7 +637,7 @@ def example_use() -> ORCA:
 
     orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
     # orca = ORCA.from_accession("NC_003272.1", email=email, model=model)
-    orca.find_oriCs(show_info=True, show_plot=False)
+    orca.find_oriCs(show_info=True, show_plot=True)
     return orca
 
 if __name__ == '__main__':

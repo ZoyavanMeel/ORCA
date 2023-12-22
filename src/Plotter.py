@@ -1,10 +1,11 @@
 """Module for plotting disparity curves."""
 
+from typing import Optional
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_Z_curve_3D(x: np.ndarray, y: np.ndarray, z: np.ndarray, name: str = None) -> None:
+def plot_Z_curve_3D(x: np.ndarray, y: np.ndarray, z: np.ndarray, name: Optional[str] = None) -> None:
     """
     3D-plot function with name as title. `x`, `y`, and `z` should be the three components of the Z-curve.
     
@@ -26,20 +27,20 @@ def plot_Z_curve_3D(x: np.ndarray, y: np.ndarray, z: np.ndarray, name: str = Non
     plt.show()
 
 
-def plot_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str], name: str = None) -> None:
+def plot_curves(curves: tuple[np.ndarray], labels: list[str], peaks: Optional[list[int]], name: Optional[str]) -> None:
     """
     Plots up to 6 different y-axes onto a single figure. Ideal for displaying multiple disparity curves in a single plot.
     If displaying more than 3 diferent axes at once, some manual adjustment of the subplot paramenters might be needed.
     - `curves` : list of lists with y-axis values.
-    - `peaks`  : list with indeces to plot onto the `curves`.
     - `labels` : list of names of each curve in `curves`.
-    - `name`   : used in plot title.
+    - `peaks`  : optional, list with indeces to plot onto the `curves`.
+    - `name`   : optional, used in plot title.
 
     -----------------------------------------------------------------------
     Example
     >>> orca = ORCA.from_accession('NC_000913', 'example@email.com')
     >>> orca.find_oriCs()
-    >>> plot_curves(curves=[orca.x, orca.y, orca.gc], peaks=orca.oriC_middles, labels=['$x_n$', '$y_n$', '$GC_n$'], name=orca.accession)
+    >>> plot_curves(curves=[orca.x, orca.y, orca.gc], labels=['$x_n$', '$y_n$', '$GC_n$'], peaks=orca.oriC_middles, name=orca.accession)
 
     Alternatively call:
 
@@ -118,12 +119,19 @@ def plot_curves(curves: tuple[np.ndarray], peaks: list[int], labels: list[str], 
     base_ax.set_xlim(min(xticks), max(xticks))
     base_ax.grid(True, which='major', zorder=1)
 
+    if len(peaks) != 0:
+        l = labels + ['Prediction']
+        n = len(curves)+1
+    else:
+        l = labels
+        n = len(curves)
+
     plt.legend(
         handles=handle_list,
-        labels=labels + ['Prediction'],
+        labels=l,
         bbox_to_anchor=(0.12, -0.35, 0.75, .102),
         loc='center',
-        ncol=len(curves)+1,
+        ncol=n,
         mode="expand",
         borderaxespad=0.
     )
