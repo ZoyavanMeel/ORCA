@@ -66,7 +66,7 @@ class TestBioFile(ut.TestCase):
     def test_fetch_file_1_good(self):
         with m.patch('Bio.Entrez.efetch') as mock_efetch:
             mock_efetch.return_value = self.text_io
-            x = BioFile.fetch_file(self.acc, self.email, None, "gbwithparts")
+            x = BioFile.fetch_file(self.acc, self.email, "gbwithparts", None)
             self.assertEqual(self.text_io, x)
 
 
@@ -82,7 +82,7 @@ class TestBioFile(ut.TestCase):
             message = "HTTP Error 400: Bad Request"
 
             try:
-                BioFile.fetch_file("ACCESSION", self.email, "123", "gbwithparts")
+                BioFile.fetch_file("ACCESSION", self.email, "gbwithparts", "123")
             except HTTPError as e:
                 self.assertRegex(str(e), message)
                 self.assertRegex(e.__notes__[0], note)
@@ -98,7 +98,7 @@ class TestBioFile(ut.TestCase):
             message = "HTTP Error 400: Bad Request"
     
             try:
-                BioFile.fetch_file("ACCESSION", self.email, None, "gbwithparts")
+                BioFile.fetch_file("ACCESSION", self.email, "gbwithparts", None)
             except HTTPError as e:
                 self.assertRegex(str(e), message)
                 self.assertRegex(e.__notes__[0], note)
@@ -110,7 +110,7 @@ class TestBioFile(ut.TestCase):
             note = 'You are fetching a file from the NCBI servers. Please make sure you have an internet connection to do so.'
 
             try:
-                BioFile.fetch_file("ACCESSION", self.email, "123", "gbwithparts")
+                BioFile.fetch_file("ACCESSION", self.email, "gbwithparts", "123")
             except URLError as e:
                 self.assertRegex(str(e), "My reason")
                 self.assertRegex(e.__notes__[0], note)

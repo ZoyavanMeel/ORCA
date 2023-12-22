@@ -1,7 +1,8 @@
 """Module for handing biodata files and whatnot."""
 
+from io import TextIOWrapper
 import os, csv, pickle, warnings
-from typing import Optional, TextIO
+from typing import Optional
 from urllib.error import HTTPError, URLError
 
 from Bio import SeqIO, Entrez
@@ -9,7 +10,7 @@ from Bio import SeqIO, Entrez
 from Peak import Peak
 
 
-def fetch_file(accession: str, email: str, api_key: Optional[str], rettype: str) -> TextIO:
+def fetch_file(accession: str, email: str, rettype: str, api_key: Optional[str] = None) -> TextIOWrapper:
     """Downloads the given file_type of the given accession in temporary memory"""
     Entrez.email = email
     if api_key is not None: Entrez.api_key = api_key
@@ -57,14 +58,14 @@ def parse_SeqRecord(record: SeqIO.SeqRecord, genes_of_interest: list[str]) -> di
     return seq_dict
 
 
-def save_gbk(accession: str, email: str, output_folder: str, api_key: Optional[str]):
+def save_gbk(accession: str, email: str, output_folder: str, api_key: Optional[str] = None):
     '''
     Download the GenBank file of a given accession and save it into the output_folder.
     Name of the file will be: `{accession}_{version}.gbk`.
     Raises a `FileExistsError` if a file with the generated name already exists in the output folder.
     If version is not provided in the accession, then the function downloads the latest version.
     '''
-    with fetch_file(accession, email, api_key, rettype="gbwithparts") as fh:
+    with fetch_file(accession, email, rettype="gbwithparts", api_key=api_key) as fh:
         # Quick search for the version of the accession that was downloaded.
         acc_v = "."
         header = ""
@@ -92,14 +93,14 @@ def save_gbk(accession: str, email: str, output_folder: str, api_key: Optional[s
         fh.close()
 
 
-def save_pkl(accession: str, email: str, output_folder: str, api_key: Optional[str]):
+def save_pkl(accession: str, email: str, output_folder: str, api_key: Optional[str] = None):
     '''
     Download the GenBank file of a given accession, parses it with Biopython into a SeqRecord, and save it into the output_folder.
     Name of the file will be: `{accession}_{version}.pkl`.
     Raises a `FileExistsError` if a file with the generated name already exists in the output folder.
     If version is not provided in the accession, then the function downloads the latest version.
     '''
-    with fetch_file(accession, email, api_key, rettype="gbwithparts") as fh:
+    with fetch_file(accession, email, rettype="gbwithparts", api_key=api_key) as fh:
 
         # Parse gbk file
         seq_rec = SeqIO.read(fh, 'gb')
