@@ -93,7 +93,7 @@ This folder contains output from the various performance test we ran on ORCA. Th
 
 ## DnaA
 
-Useful acticles about DnaA(-boxes): [[1]](https://doi.org/10.1101/cshperspect.a012922), [[2]](https://doi.org/10.1093/nar/gkr832), [[3]](https://doi.org/10.3389/fmicb.2018.00319), [[4]](https://doi.org/10.1046/j.1365-2958.1996.6481362.x.).
+Useful acticles about DnaA(-boxes): [[1]](https://doi.org/10.1101/cshperspect.a012922), [[2]](https://doi.org/10.1093/nar/gkr832), [[3]](https://doi.org/10.3389/fmicb.2018.00319), [[4]](https://doi.org/10.1046/j.1365-2958.1996.6481362.x).
 
 We use the first entry in the table below and allow for 0 mismatches in this sequence.
 
