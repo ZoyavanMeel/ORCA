@@ -94,19 +94,15 @@ class Peak():
         # Error handling and variable initialisation
         are_integers = True if isinstance(peaks_a[0], int) else False
         if are_integers and seq_len is None:
-            raise ValueError(
-                'Provided list of integers, but did not provide `seq_len`.')
+            raise ValueError('Provided list of integers, but did not provide `seq_len`.')
         if not all(isinstance(x, type(peaks_a[0])) for x in peaks_a[1:]):
-            raise ValueError(
-                'Not all elements in `peaks_a` are of the same type.')
+            raise ValueError('Not all elements in `peaks_a` are of the same type.')
 
         if peaks_b is not None:
             if not all(isinstance(x, type(peaks_b[0])) for x in peaks_b[1:]):
-                raise ValueError(
-                    'Not all elements in `peaks_b` are of the same type.')
+                raise ValueError('Not all elements in `peaks_b` are of the same type.')
             if not isinstance(peaks_b[0], type(peaks_a[0])):
-                raise ValueError(
-                    'Elements is `peaks_a` are not the same type as `peaks_b`.')
+                raise ValueError('Elements is `peaks_a` are not the same type as `peaks_b`.')
 
             adj_mat = np.zeros((len(peaks_a), len(peaks_b)))
             iterator = product(enumerate(peaks_a), enumerate(peaks_b))
@@ -139,8 +135,7 @@ class Peak():
             connected_list.append(idx)
             for i in range(len(visited)):
                 if adj_mat[i][idx] < threshold and not visited[i]:
-                    _, _, visited, connected_list, _ = _DFS_recurse(
-                        i, adj_mat, visited, connected_list, threshold)
+                    _, _, visited, connected_list, _ = _DFS_recurse(i, adj_mat, visited, connected_list, threshold)
             return idx, adj_mat, visited, connected_list, threshold
 
         visited = [False] * len(vertices)
@@ -148,8 +143,7 @@ class Peak():
         for i in range(len(vertices)):
             if not visited[i]:
                 group = []
-                _, _, visited, group, _ = _DFS_recurse(
-                    i, adj_mat, visited, group, threshold=threshold)
+                _, _, visited, group, _ = _DFS_recurse(i, adj_mat, visited, group, threshold=threshold)
                 connected_groups_idx.append(group)
         return connected_groups_idx
 
@@ -163,8 +157,7 @@ class Peak():
         - `adj_mat`   : adjacency matrix for each Peak to each other Peak
         - `threshold` : maximum distance between peaks on the sequence for which they are considered connected.
         """
-        cg_i = Peak.get_connected_components_idx(
-            [i for i in range(len(peaks))], adj_mat, threshold)
+        cg_i = Peak.get_connected_components_idx([i for i in range(len(peaks))], adj_mat, threshold)
         groups_to_process = [(group, threshold) for group in cg_i]
         accepted_groups_idx = []
         flag = False
@@ -181,20 +174,16 @@ class Peak():
                 # get peaks that correspond to the indexes in the flagged group
                 curr_peaks = [peaks[i] for i in curr_group]
                 mat = Peak.get_adjacency_matrix(curr_peaks)
-                new_groups = Peak.get_connected_components_idx(
-                    curr_peaks, mat, curr_threshold)
+                new_groups = Peak.get_connected_components_idx(curr_peaks, mat, curr_threshold)
                 # revert indexing to that of the peaks list
-                new_groups = [[curr_group[i] for i in group]
-                              for group in new_groups]
+                new_groups = [[curr_group[i] for i in group] for group in new_groups]
                 # add new groups for processing
-                groups_to_process.extend(
-                    [(new_group, 0.75*curr_threshold) for new_group in new_groups])
+                groups_to_process.extend([(new_group, 0.75*curr_threshold) for new_group in new_groups])
                 flag = False
             else:
                 accepted_groups_idx.append(curr_group)
 
-        connected_groups_vals = [[peaks[i] for i in idx_group]
-                                 for idx_group in accepted_groups_idx]
+        connected_groups_vals = [[peaks[i] for i in idx_group] for idx_group in accepted_groups_idx]
         return connected_groups_vals
 
     @staticmethod
@@ -204,17 +193,13 @@ class Peak():
         Returns a new Peak.middle (int) in the middle of a and b
         """
 
-        seq_len = a.seq_len if curve_size is None and isinstance(
-            a, Peak) else curve_size
-        seq_len = b.seq_len if seq_len is None and isinstance(
-            b, Peak) else seq_len
+        seq_len = a.seq_len if curve_size is None and isinstance(a, Peak) else curve_size
+        seq_len = b.seq_len if seq_len is None and isinstance(b, Peak) else seq_len
 
         a, b = int(a), int(b)
 
         if seq_len is None:
-            raise ValueError(
-                "No curve size found in any parameters. This method is for circular DNA only."
-            )
+            raise ValueError("No curve size found in any parameters. This method is for circular DNA only.")
 
         dist_1 = max(a, b) - min(a, b)
         dist_2 = min(a, b) + seq_len-1 - max(a, b)
@@ -230,9 +215,7 @@ class Peak():
     def intersecting_windows(self, other: "Peak") -> bool:
         '''T|F wether self's window intersects with other's window.'''
         if not isinstance(other, Peak):
-            raise ValueError(
-                f'other is a {type(other)}, must be a Peak object'
-            )
+            raise ValueError(f'other is a {type(other)}, must be a Peak object')
         x = Peak.calc_dist_points(self.middle, other.middle, self.seq_len)
         y = self.window_size//2 + other.window_size//2
         return x < y
@@ -250,12 +233,8 @@ class Peak():
     def __hash__(self) -> int:
         '''very simple hash function. Does not include scores'''
         return hash(
-            (self.middle,
-             self.seq_len,
-             self.window_size,
-             self.split,
-             self.five_side,
-             self.three_side)
+            (self.middle, self.seq_len, self.window_size, self.split,
+             self.five_side, self.three_side)
         )
 
     def __eq__(self, other: "Peak") -> bool:

@@ -45,8 +45,7 @@ def parse_SeqRecord(record: SeqIO.SeqRecord, genes_of_interest: list[str]) -> di
     seq_dict = {
         'accession': accession,
         'version': int(version),
-        # I only use the sequence to loop over once. strings are much faster for this.
-        'seq': str(record.seq),
+        'seq': str(record.seq),  # I only use the sequence to loop over once. strings are much faster for this.
         'seq_len': len(record.seq),
         'gene_locations': [],
         'NCBI_oriC': []
@@ -55,14 +54,11 @@ def parse_SeqRecord(record: SeqIO.SeqRecord, genes_of_interest: list[str]) -> di
     for feature in record.features:
         # is this feature a coding sequence and a gene and is its name something we are looking for?
         if feature.type == 'CDS' and 'gene' in feature.qualifiers and feature.qualifiers['gene'][0] in genes_of_interest:
-            gene_loc = Peak.from_calc_middle(int(feature.location.start), int(
-                feature.location.end), len(record.seq), 0)
-            seq_dict['gene_locations'].append(
-                (feature.qualifiers['gene'][0], gene_loc))
+            gene_loc = Peak.from_calc_middle(int(feature.location.start), int(feature.location.end), len(record.seq), 0)
+            seq_dict['gene_locations'].append((feature.qualifiers['gene'][0], gene_loc))
         # just in case this SeqRecord has an annotated oriC!
         if feature.type == 'rep_origin':
-            oriC = Peak.from_calc_middle(int(feature.location.start), int(
-                feature.location.end), len(record.seq), 0)
+            oriC = Peak.from_calc_middle(int(feature.location.start), int(feature.location.end), len(record.seq), 0)
             seq_dict['NCBI_oriC'].append(('oriC', oriC))
             warnings.warn(
                 f"{accession}.{version}: found an annotated oriC in the provided file. Saved in 'NCBI_oriC' attribute of the ORCA object.")
@@ -93,8 +89,7 @@ def save_gbk(accession: str, email: str, output_folder: str, api_key: Optional[s
         # Check if a file with the same name already exists
         if os.path.exists(os.path.join(output_folder, acc + '_' + version + '.gbk')):
             fh.close()
-            raise FileExistsError(
-                f'\'{acc}_{version}.gbk\' already exists in: {output_folder}')
+            raise FileExistsError(f'\'{acc}_{version}.gbk\' already exists in: {output_folder}')
 
         # Save contents to path
         file_path = os.path.join(output_folder, acc + '_' + version + '.gbk')
@@ -121,8 +116,7 @@ def save_pkl(accession: str, email: str, output_folder: str, api_key: Optional[s
         # Check if a file with the same name already exists
         if os.path.exists(os.path.join(output_folder, acc + '_' + version + '.pkl')):
             fh.close()
-            raise FileExistsError(
-                f'\'{acc}_{version}.pkl\' already exists in: {output_folder}')
+            raise FileExistsError(f'\'{acc}_{version}.pkl\' already exists in: {output_folder}')
 
         # Save contents to path
         file_path = os.path.join(output_folder, acc + '_' + version + '.pkl')

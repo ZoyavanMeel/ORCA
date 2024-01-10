@@ -123,8 +123,7 @@ class ORCA:
         orca = cls()
         orca.__make(**kwargs)
 
-        file_args = BioFile.parse_SeqRecord(
-            SeqIO.read(path, 'gb'), orca.genes_of_interest)
+        file_args = BioFile.parse_SeqRecord(SeqIO.read(path, 'gb'), orca.genes_of_interest)
         for key, value in file_args.items():
             setattr(orca, key, value)
         return orca
@@ -174,8 +173,7 @@ class ORCA:
                 raise
             fh.close()
             if not isinstance(record, SeqIO.SeqRecord):
-                raise ValueError(
-                    f"Pickled object must be a SeqRecord object, but was a \'{type(record)}\' instead.")
+                raise ValueError(f"Pickled object must be a SeqRecord object, but was a \'{type(record)}\' instead.")
             file_args = BioFile.parse_SeqRecord(record, orca.genes_of_interest)
             for key, value in file_args.items():
                 setattr(orca, key, value)
@@ -216,8 +214,7 @@ class ORCA:
                 \tGenerate an API_key at: https://www.ncbi.nlm.nih.gov/account/settings/ (optional)
             """)
         with BioFile.fetch_file(accession, email, rettype='gbwithparts', api_key=api_key) as handle:
-            file_args = BioFile.parse_SeqRecord(
-                SeqIO.read(handle, 'gb'), orca.genes_of_interest)
+            file_args = BioFile.parse_SeqRecord(SeqIO.read(handle, 'gb'), orca.genes_of_interest)
             handle.close()
             for key, value in file_args.items():
                 setattr(orca, key, value)
@@ -240,27 +237,19 @@ class ORCA:
         }
 
         # Update defaults with provided values
-        args = {key: kwargs[key] if key in kwargs else defaults[key]
-                for key in defaults}
+        args = {key: kwargs[key] if key in kwargs else defaults[key] for key in defaults}
 
         # Simple type enforcing. Overriding default parameters is okay, but provide empty lists if you do.
-        assert args['model'] is None or is_classifier(
-            args['model']), 'model must be a scikit-learn classifier.'
-        assert isinstance(
-            args['windows'], list), 'windows must be a list of integers.'
-        assert isinstance(args['dnaa_boxes'],
-                          list), 'dnaa_boxes must be a list of strings.'
-        assert isinstance(args['max_mismatches'],
-                          int), 'max_mismatches must be an integer.'
-        assert isinstance(args['max_point_spread'],
-                          float), 'max_point_spread must be an integer.'
-        assert isinstance(args['genes_of_interest'],
-                          list), 'genes_of_interest must be a list of strings.'
+        assert args['model'] is None or is_classifier(args['model']), 'model must be a scikit-learn classifier.'
+        assert isinstance(args['windows'], list), 'windows must be a list of integers.'
+        assert isinstance(args['dnaa_boxes'], list), 'dnaa_boxes must be a list of strings.'
+        assert isinstance(args['max_mismatches'], int), 'max_mismatches must be an integer.'
+        assert isinstance(args['max_point_spread'], float), 'max_point_spread must be an integer.'
+        assert isinstance(args['genes_of_interest'], list), 'genes_of_interest must be a list of strings.'
 
         # Setup all possible dnaA-box regions
         args['input_dnaa_boxes'] = args['dnaa_boxes'].copy()
-        args['dnaa_boxes'] = ORCA.get_dnaa_boxes_with_mismatches(
-            args['input_dnaa_boxes'], args['max_mismatches'])
+        args['dnaa_boxes'] = ORCA.get_dnaa_boxes_with_mismatches(args['input_dnaa_boxes'], args['max_mismatches'])
 
         return args
 
@@ -359,8 +348,7 @@ class ORCA:
             y.append((a + c) - (g + t))  # Amino vs Keto
             z.append((a + t) - (c + g))  # Weak vs Strong Hydrogen Bonds
 
-            kmer = self.seq[i:i+k] if i <= self.seq_len - \
-                k else self.seq[i:] + self.seq[:k-(self.seq_len-i)]
+            kmer = self.seq[i:i+k] if i <= self.seq_len - k else self.seq[i:] + self.seq[:k-(self.seq_len-i)]
             if kmer in self.dnaa_boxes:
                 mid = i+k//2+1 if i+k//2+1 <= self.seq_len else i+k//2+1 - self.seq_len
                 try:
@@ -379,12 +367,9 @@ class ORCA:
         peaks = []
         for fraction in self.windows:
             window_size = int(self.seq_len * fraction)
-            peaks_x = CurveProcessing.process_curve(
-                self.x, 'min', window_size=window_size)
-            peaks_y = CurveProcessing.process_curve(
-                self.y, 'max', window_size=window_size)
-            peaks_gc = CurveProcessing.process_curve(
-                self.gc, 'min', window_size=window_size)
+            peaks_x = CurveProcessing.process_curve(self.x, 'min', window_size=window_size)
+            peaks_y = CurveProcessing.process_curve(self.y, 'max', window_size=window_size)
+            peaks_gc = CurveProcessing.process_curve(self.gc, 'min', window_size=window_size)
             peaks.extend([j for i in CurveProcessing.curve_combinations(
                 (peaks_x, peaks_y, peaks_gc), self.seq_len) for j in i])
         return peaks
@@ -393,8 +378,7 @@ class ORCA:
         '''Finding connected components in undirected graph with a depth-first search to merge Z-curve oriCs'''
 
         adj_mat = Peak.get_adjacency_matrix(peaks)
-        connected_groups = Peak.select_connected_groups(
-            peaks, adj_mat, int(self.seq_len*self.max_point_spread))
+        connected_groups = Peak.select_connected_groups(peaks, adj_mat, int(self.seq_len*self.max_point_spread))
         connected_groups.sort(key=lambda x: len(x), reverse=True)
 
         total_pot_oriCs = len([y for x in connected_groups for y in x])
@@ -418,8 +402,7 @@ class ORCA:
         if len(self.dnaa_dict.keys()) == 0:
             return [0] * len(peaks)
         contains_boxes = []
-        all_pos = [pos for pos_list in self.dnaa_dict.values()
-                   for pos in pos_list]
+        all_pos = [pos for pos_list in self.dnaa_dict.values() for pos in pos_list]
         for oriC in peaks:
             count = 0
             for pos in all_pos:
@@ -432,13 +415,11 @@ class ORCA:
         '''Process the location of the genes of interest and rank the potential oriCs based on how close they are to these genes'''
         if len(self.gene_locations) == 0:
             return [0] * len(peaks)
-        gene_peaks = [name_loc_tuple[1]
-                      for name_loc_tuple in self.gene_locations]
+        gene_peaks = [name_loc_tuple[1] for name_loc_tuple in self.gene_locations]
         matrix = Peak.get_adjacency_matrix(peaks, gene_peaks)
         if np.min(matrix) == np.max(matrix):
             return [1] * matrix.shape[1]
-        norm_mat = (matrix - np.min(matrix)) / \
-            (np.max(matrix) - np.min(matrix))
+        norm_mat = (matrix - np.min(matrix)) / (np.max(matrix) - np.min(matrix))
         return [1 - x for x in np.mean(norm_mat, axis=1)]
 
     def __check_run_properly(self, attr: str, msg: str) -> None:
@@ -458,18 +439,14 @@ class ORCA:
 
         print(f'{"Accession":<{spacer_1}}: {self.accession}')
 
-        attrs = ['predictions', 'Z_scores',
-                 'G_scores', 'D_scores', 'oriC_middles']
+        attrs = ['predictions', 'Z_scores', 'G_scores', 'D_scores', 'oriC_middles']
         for attr in attrs:
             if isinstance(getattr(self, attr)[0], float):
-                results = ''.join(
-                    f'{round(x, spacer_2-4): >{spacer_2}}' for x in getattr(self, attr))
+                results = ''.join(f'{round(x, spacer_2-4): >{spacer_2}}' for x in getattr(self, attr))
             else:
-                results = ''.join(
-                    f'{str(x): >{spacer_2}}' for x in getattr(self, attr))
+                results = ''.join(f'{str(x): >{spacer_2}}' for x in getattr(self, attr))
             print(f'{attr:<{spacer_1}}:{results}')
-        print("The best-scoring potential oriC was found at:",
-              self.oriC_middles[self.best_oriC_idx], "bp.")
+        print("The best-scoring potential oriC was found at:", self.oriC_middles[self.best_oriC_idx], "bp.")
 
     def plot_oriC_curves(self) -> None:
         """
@@ -491,8 +468,7 @@ class ORCA:
         >>> plot_curves(curves=[orca.x, orca.y, orca.gc], peaks=orca.oriC_middles, labels=['$x_n$', '$y_n$', '$GC_n$'], name=orca.accession)
         """
         self.__check_run_properly("oriC_middles", "Cannot plot curves.")
-        Plotter.plot_curves([self.x, self.y, self.gc], [
-                            '$x_n$', '$y_n$', '$GC_n$'], self.oriC_middles, self.accession)
+        Plotter.plot_curves([self.x, self.y, self.gc], ['$x_n$', '$y_n$', '$GC_n$'], self.oriC_middles, self.accession)
 
     def _set_best_pot_oriC_idx(self) -> None:
         """
@@ -510,13 +486,11 @@ class ORCA:
         if len(self.predictions) == 0 or self.predictions[0] is None:
             mat = np.asarray([self.Z_scores, self.D_scores, self.G_scores]).T
         else:
-            mat = np.asarray([self.predictions, self.Z_scores,
-                             self.D_scores, self.G_scores]).T
+            mat = np.asarray([self.predictions, self.Z_scores, self.D_scores, self.G_scores]).T
         max_idx_options = [j for j in range(mat.shape[0])]
 
         for i in range(mat.shape[1]):
-            max_idx_in_curr_col = np.where(
-                mat[max_idx_options, i] == np.max(mat[max_idx_options, i]))[0].tolist()
+            max_idx_in_curr_col = np.where(mat[max_idx_options, i] == np.max(mat[max_idx_options, i]))[0].tolist()
             max_idx_options = [max_idx_options[j] for j in max_idx_in_curr_col]
             if len(max_idx_options) == 1:
                 break
@@ -593,8 +567,7 @@ class ORCA:
         NC_example.3
         '''
 
-        self.__check_run_properly(
-            "accession", "This object has not been instantiated properly.")
+        self.__check_run_properly("accession", "This object has not been instantiated properly.")
 
         # Step 1: Calculate disparity curves + finding dnaA-box regions
         self.calculate_disparity_curves()

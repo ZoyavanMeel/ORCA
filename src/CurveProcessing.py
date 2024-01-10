@@ -10,15 +10,13 @@ from Peak import Peak
 
 def process_curve(curve: np.ndarray, mode: str, window_size: int) -> list[Peak]:
     '''Runs the given 1D-array (curve) through all processing functions for oriC identification. Returns its peaks'''
-    init_peaks = [Peak(peak, curve.shape[0], window_size)
-                  for peak in detect_peaks(curve)]
+    init_peaks = [Peak(peak, curve.shape[0], window_size) for peak in detect_peaks(curve)]
     accepted_peaks = filter_peaks(curve, mode, init_peaks)
     peaks_to_merge = Peak.get_peaks_to_merge(accepted_peaks)
 
-    single_peaks = [x for x in accepted_peaks if not any(
-        x in y for y in peaks_to_merge)]
-    merged_peaks = [Peak.from_calc_middle(
-        to_merge[0], to_merge[1], curve.shape[0], window_size) for to_merge in peaks_to_merge]
+    single_peaks = [x for x in accepted_peaks if not any(x in y for y in peaks_to_merge)]
+    merged_peaks = [Peak.from_calc_middle(to_merge[0], to_merge[1], curve.shape[0],
+                                          window_size) for to_merge in peaks_to_merge]
     return single_peaks + merged_peaks
 
 
@@ -28,8 +26,8 @@ def curve_combinations(peaks_list: tuple[list["Peak"]], seq_len: int) -> list:
     for peaks_i, peaks_j in combinations(peaks_list, 2):
         matched_peaks = Peak.match_peaks(peaks_i, peaks_j)
         oriC_locations_list.append(
-            [Peak.from_calc_middle(matches[0], matches[1], seq_len,
-                                   peaks_list[0][0].window_size) for matches in matched_peaks]
+            [Peak.from_calc_middle(matches[0], matches[1], seq_len, peaks_list[0][0].window_size)
+             for matches in matched_peaks]
         )
     return oriC_locations_list
 
@@ -72,10 +70,7 @@ def _filter_within_windows(curve: np.ndarray, mode: str, peaks: list[Peak]):
             #     _______0                             0_______
             #     5'   m    3'                      5'   m    3'
             # -----------|-----------  vs.  -----------|-----------
-            if peak.middle > peak.five_side:
-                comparator_win = curve[peak.five_side:]
-            else:
-                comparator_win = curve[:peak.three_side]
+            comparator_win = curve[peak.five_side:] if (peak.middle > peak.five_side) else curve[:peak.three_side]
         else:
             comparator_win = curve[peak.five_side:peak.three_side]
 
