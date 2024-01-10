@@ -1,8 +1,11 @@
 """Module for handing biodata files and whatnot."""
 
-from io import TextIOWrapper
-import os, csv, pickle, warnings
+import os
+import csv
+import pickle
+import warnings
 from typing import Optional
+from io import TextIOWrapper
 from urllib.error import HTTPError, URLError
 
 from Bio import SeqIO, Entrez
@@ -13,19 +16,22 @@ from Peak import Peak
 def fetch_file(accession: str, email: str, rettype: str, api_key: Optional[str] = None) -> TextIOWrapper:
     """Downloads the given file_type of the given accession in temporary memory"""
     Entrez.email = email
-    if api_key is not None: Entrez.api_key = api_key
+    if api_key is not None:
+        Entrez.api_key = api_key
     try:
         return Entrez.efetch(db="nuccore", id=accession, rettype=rettype, retmode="text")
     except HTTPError as BadRequest:
         if api_key is not None:
             api_message_1 = f' with API_key \'{api_key}\''
             api_message_2 = ' and if your API_key is correctly typed and linked to the given email'
-        else :
+        else:
             api_message_1, api_message_2 = '', ''
-        BadRequest.add_note(f'Unable to fetch accession: \'{accession}\' using \'{email}\'{api_message_1}. Please check if the accession is of an existing chromosomal sequence{api_message_2}.')
+        BadRequest.add_note(
+            f'Unable to fetch accession: \'{accession}\' using \'{email}\'{api_message_1}. Please check if the accession is of an existing chromosomal sequence{api_message_2}.')
         raise
     except URLError as NoConnection:
-        NoConnection.add_note('You are fetching a file from the NCBI servers. Please make sure you have an internet connection to do so.')
+        NoConnection.add_note(
+            'You are fetching a file from the NCBI servers. Please make sure you have an internet connection to do so.')
         raise
 
 
@@ -39,7 +45,8 @@ def parse_SeqRecord(record: SeqIO.SeqRecord, genes_of_interest: list[str]) -> di
     seq_dict = {
         'accession': accession,
         'version': int(version),
-        'seq': str(record.seq), # I only use the sequence to loop over once. strings are much faster for this.
+        # I only use the sequence to loop over once. strings are much faster for this.
+        'seq': str(record.seq),
         'seq_len': len(record.seq),
         'gene_locations': [],
         'NCBI_oriC': []
@@ -48,13 +55,17 @@ def parse_SeqRecord(record: SeqIO.SeqRecord, genes_of_interest: list[str]) -> di
     for feature in record.features:
         # is this feature a coding sequence and a gene and is its name something we are looking for?
         if feature.type == 'CDS' and 'gene' in feature.qualifiers and feature.qualifiers['gene'][0] in genes_of_interest:
-            gene_loc = Peak.from_calc_middle(int(feature.location.start), int(feature.location.end), len(record.seq), 0)
-            seq_dict['gene_locations'].append( (feature.qualifiers['gene'][0], gene_loc) )
+            gene_loc = Peak.from_calc_middle(int(feature.location.start), int(
+                feature.location.end), len(record.seq), 0)
+            seq_dict['gene_locations'].append(
+                (feature.qualifiers['gene'][0], gene_loc))
         # just in case this SeqRecord has an annotated oriC!
         if feature.type == 'rep_origin':
-            oriC = Peak.from_calc_middle(int(feature.location.start), int(feature.location.end), len(record.seq), 0)
-            seq_dict['NCBI_oriC'].append( ('oriC', oriC) )
-            warnings.warn(f"{accession}.{version}: found an annotated oriC in the provided file. Saved in 'NCBI_oriC' attribute of the ORCA object.")
+            oriC = Peak.from_calc_middle(int(feature.location.start), int(
+                feature.location.end), len(record.seq), 0)
+            seq_dict['NCBI_oriC'].append(('oriC', oriC))
+            warnings.warn(
+                f"{accession}.{version}: found an annotated oriC in the provided file. Saved in 'NCBI_oriC' attribute of the ORCA object.")
     return seq_dict
 
 
@@ -82,7 +93,8 @@ def save_gbk(accession: str, email: str, output_folder: str, api_key: Optional[s
         # Check if a file with the same name already exists
         if os.path.exists(os.path.join(output_folder, acc + '_' + version + '.gbk')):
             fh.close()
-            raise FileExistsError(f'\'{acc}_{version}.gbk\' already exists in: {output_folder}')
+            raise FileExistsError(
+                f'\'{acc}_{version}.gbk\' already exists in: {output_folder}')
 
         # Save contents to path
         file_path = os.path.join(output_folder, acc + '_' + version + '.gbk')
@@ -105,12 +117,13 @@ def save_pkl(accession: str, email: str, output_folder: str, api_key: Optional[s
         # Parse gbk file
         seq_rec = SeqIO.read(fh, 'gb')
         acc, version = seq_rec.id.split('.')
-        
+
         # Check if a file with the same name already exists
         if os.path.exists(os.path.join(output_folder, acc + '_' + version + '.pkl')):
             fh.close()
-            raise FileExistsError(f'\'{acc}_{version}.pkl\' already exists in: {output_folder}')
-        
+            raise FileExistsError(
+                f'\'{acc}_{version}.pkl\' already exists in: {output_folder}')
+
         # Save contents to path
         file_path = os.path.join(output_folder, acc + '_' + version + '.pkl')
         with open(file_path, 'wb') as oh:
