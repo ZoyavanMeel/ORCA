@@ -29,14 +29,14 @@ PROCESSES    = None #os.cpu_count() - 1 # Number of processes started by the gri
 
 DATA_PATH_DORIC   = "data/output/machine_learning/labels.csv"
 DATA_PATH_EXP_SET = "data/output/machine_learning/labels_against_NCBI.csv"
-MODEL_OUT_PATH    = "data/output/machine_learning/24k_set_model.pkl"
+MODEL_OUT_PATH    = "data/output/machine_learning/ORCA_RFC_model.pkl"
 
 
 def load_data_labels_from_path(path: str) -> tuple[pd.DataFrame, pd.Series]:
     df = pd.read_csv(path)
     # !!! Keep this column order! This is the same order as ORCA will input the features when trying to predict.
     # ORCA uses a model trained on numpy array instead of a pandas dataframe.
-    X = df[['Z_score', 'G_score', 'D_score', 'total_pot']]
+    X = df[['Z_score', 'G_score', 'D_score']]
     
     # Feature-scaling does not provide any better performance
     # X_scaled = StandardScaler().fit_transform(X)
@@ -44,7 +44,7 @@ def load_data_labels_from_path(path: str) -> tuple[pd.DataFrame, pd.Series]:
     return X, y
 
 def load_data_labels_from_df(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
-    X = df[['Z_score', 'G_score', 'D_score', 'total_pot']]
+    X = df[['Z_score', 'G_score', 'D_score']]
     y = df['correct']
     return X, y
 
@@ -231,7 +231,6 @@ def main_DoriC_vs_exp_set() -> None:
 def main_save_model() -> None:
     X, y = load_data_labels_from_path(DATA_PATH_DORIC)
 
-    
     X = X.to_numpy()
     y = y.to_numpy()
 

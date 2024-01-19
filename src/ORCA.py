@@ -596,9 +596,8 @@ class ORCA:
         # Step 5: Machine Learning model decision function.
         decisions = [None for i in range(len(oriCs))]
         if self.model is not None:
-            total_pot_oriCs = [len(oriCs)] * len(oriCs)
             decisions = self.model.predict_proba(np.asarray(
-                [Z_scores, G_scores, D_scores, total_pot_oriCs]).T)[:, 1].tolist()
+                [Z_scores, G_scores, D_scores]).T)[:, 1].tolist()
         oriC_middles = [oriC.middle for oriC in oriCs]
 
         # Step 6: Setting the last variables to the proper values
@@ -631,10 +630,10 @@ def example_use() -> ORCA:
     # Provided model is compressed due to GitHub's file size limits.
     # Pickle file for the provided model. Model is around 189 MB uncompressed and 30 MB compressed,
     # so it is too large to upload to GitHub.
-    model = joblib.load("data/output/machine_learning/24k_set_model.pkl.gz")
+    model = joblib.load("data/output/machine_learning/ORCA_RFC_model.pkl.gz")
 
-    orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
-    # orca = ORCA.from_accession("NC_000964", email=email, model=model)
+    # orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
+    orca = ORCA.from_accession("NC_014248", email=email, model=model)
     orca.find_oriCs(show_info=True, show_plot=True)
     return orca
 
