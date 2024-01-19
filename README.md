@@ -6,9 +6,21 @@ Python scripts that predict and plot the location of the origin of replication (
 
 This script predicts the origin of replication for circular bacterial DNA. It makes use of a combination of [Z-curve](https://en.wikipedia.org/wiki/Z_curve) and [GC-skew](https://en.wikipedia.org/wiki/GC_skew), *dnaA*-box, and gene location analyses. You can load the required FASTA files yourself, or simply provide an accession and NCBI-account email and ORCA will fetch them. The docs-string of the function shows more information on what is needed to use ORCA. See the code for the function `example_use` for more information. **NOTE:** the model provided in this repository has been compressed due to file size limitations. This example also uses the [Joblib](https://joblib.readthedocs.io/en/stable/) package for unpickling the model. This is not necessary, and Python's standard pickle package can be used.
 
+### Input
+
 Please, make sure to load the proper file formats into the functions, otherwise ORCA will not work. A lot of invalid parameters will throw warnings or errors, but it is not improbable that a few were missed. More of ORCA's functionality and input methods are discussed in the paper.
 
+There are four valid input formats for ORCA. Provided one has an internet connection, ORCA can function using only an accession number. When using only an accession, ORCA will fetch the corresponding GenBank file from NCBI using Biopython's Entrez module. Please adhere to NCBI's rules on making use of their API. This module functions as a Python interface for NCBI's Entrez Direct. The version number of the accession can be specified. If this is omitted, the most recent version is automatically chosen. One can also provide the GenBank file themselves This file will be processed the same way, but does not require an internet connection.
+
+Another option is to provide Biopython SeqRecord objects. ORCA uses Biopython's SeqIO module for parsing the GenBank file. This means that input from GenBank will go through this module anyway and uses SeqRecords. Providing a SeqRecord that was made by parsing a Genbank file using this same module is therefore also possible. Pickled SeqRecord objects take up more memory, but they can be parsed quicker. This is a consideration that can be taken into account when processing large genomic datasets.
+
+Lastly, one can also simply provide a DNA-sequence string. This same input method allows for indicating the location of the indicator genes. These gene locations are not inferred from the provided sequence and will have to be provided. This is the fastest input format, but takes the most work from the user. All input parameters are assumed to be in the correct specified format and will not be processed using Biopython. Further explanation on each of these formats can also be found in the documentation of the code.
+
 ### Example use of ORCA
+
+With the RFC, we provide a general use-case *oriC* prediction tool as outlined in the application note. However, as shown in the code documentation, there are many parameters that can be fine-tuned and possibly improved. One of the reasons of ORCA being open-source, is to provide not just a transparent *oriC*-prediction tool, but also a building block for further research.
+
+It is possible to tune all parameters and train models for highly accurate prediction of the *oriC*s of bacterial species of interest. This could be done by incorporating more indicator genes for that species, or changing any number of other parameters. It could also be possible to adapt ORCA for the use in the prediction of *oriC*s in linear prokaryotic chromosomes, or archaea. it is our hope that ORCA can help research into any or all of these avenues with its adaptability or provide a lightweight easy-to-use tool with good out-of-the-box performance.
 
 ```python
 >>> import joblib
@@ -83,7 +95,7 @@ This folder contains a lot of data used in analysing, training, and testing ORCA
 
 ### input
 
-This folder contains all the input data. This includes the data from DoriC 12.0. It also includes the experimental_dataset CSV. This is a collection of oriCs that have been experimentally verified. It also includes sources for each chromosome. This dataset was made in order to check the quality of DoriC.
+This folder contains all the input data. This includes the data from DoriC 12.0. It also includes the `experimental_dataset` CSV. This is a collection of oriCs that have been experimentally verified. It also includes sources for each chromosome. This dataset was made in order to check the quality of DoriC.
 
 This folder also includes a pickled `SeqRecord` object of the *E. coli* K-12 chromosome. This file was used for quick testing and demonstration.
 
@@ -93,7 +105,7 @@ This folder contains output from the various performance test we ran on ORCA. Th
 
 ## DnaA
 
-Useful articles about DnaA(-boxes): [[1]](https://doi.org/10.1101/cshperspect.a012922), [[2]](https://doi.org/10.1093/nar/gkr832), [[3]](https://doi.org/10.3389/fmicb.2018.00319), [[4]](https://doi.org/10.1046/j.1365-2958.1996.6481362.x).
+The table below shows a small overview of common *dnaA*-boxes and relevant papers associated with them. This table is by no means complete, but can serve as a starting point for further research. We also include some more papers that were useful in researching the effects of the *dnaA* protein and its binding sites: [[1]](https://doi.org/10.1101/cshperspect.a012922), [[2]](https://doi.org/10.1093/nar/gkr832), [[3]](https://doi.org/10.3389/fmicb.2018.00319), [[4]](https://doi.org/10.1046/j.1365-2958.1996.6481362.x).
 
 We use the first entry in the table below and allow for 0 mismatches in this sequence.
 
