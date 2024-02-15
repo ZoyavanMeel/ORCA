@@ -101,7 +101,10 @@ This folder also includes a pickled `SeqRecord` object of the *E. coli* K-12 chr
 
 ### output
 
-This folder contains output from the various performance test we ran on ORCA. The machine_learning sub-folder contains the provided Random Forest Classifier used in the application note.
+This folder contains output from the various performance test we ran on ORCA. The machine_learning sub-folder contains the provided Random Forest Classifiers. Use the gzip and pickle from the standard Python library to load the models or, alternatively, use [joblib](https://joblib.readthedocs.io/en/stable/).
+
+- `ORCA_RFC_model.pkl.gz`: This model has been trained on the full DoriC 12.0 dataset.
+- `ORCA_RFC_model_70_percent.pkl.gz`: This model has been trained on roughly 70 % of the DoriC 12.0 dataset. First all the experimentally verified origins were subtracted and the remaining dataset was split 70:30 stratified. This model is has been included for posterity. Use the other model for any analyses.
 
 ## DnaA
 
