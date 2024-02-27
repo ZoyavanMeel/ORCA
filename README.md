@@ -2,6 +2,16 @@
 
 Python scripts that predict and plot the location of the origin of replication (*oriC*) of circular bacterial genomes based on Z-curve, GC-skew, *dnaA*-box, and gene location analyses. This README will not explain all of ORCA's methods. All functions, main or helper, are labelled with docs-strings and type-hinting for ease-of-use. Most functions in ORCA can be used separately as well. For example, `calculate_disparities_curves` can be used outside of ORCA, too. As well as all functions for fetching files from NCBI, or plotter functions, etc. Please, see their provided docs-strings for more info.
 
+## Installing ORCApy
+
+To install ORCApy, simply use:
+
+```sh
+pip install orcapy
+```
+
+Or download it directly from the PyPi website [here](https://pypi.org/project/orcapy/). The installation and download only include the files present in the `src` folder.
+
 ## ORCA class
 
 This script predicts the origin of replication for circular bacterial DNA. It makes use of a combination of [Z-curve](https://en.wikipedia.org/wiki/Z_curve) and [GC-skew](https://en.wikipedia.org/wiki/GC_skew), *dnaA*-box, and gene location analyses. You can load the required FASTA files yourself, or simply provide an accession and NCBI-account email and ORCA will fetch them. The docs-string of the function shows more information on what is needed to use ORCA. See the code for the function `example_use` for more information. **NOTE:** the model provided in this repository has been compressed due to file size limitations. This example also uses the [Joblib](https://joblib.readthedocs.io/en/stable/) package for unpickling the model. This is not necessary, and Python's standard pickle package can be used.
@@ -24,9 +34,9 @@ It is possible to tune all parameters and train models for highly accurate predi
 
 ```python
 >>> import joblib
->>> from ORCA import ORCA
+>>> from orcapy import ORCA, ORCA_RFC_model
 >>> email = "example@email.com"
->>> model = joblib.load("data/output/machine_learning/24k_set_model.pkl")
+>>> model = ORCA_RFC_model()
 >>> orca = ORCA.from_accession("NC_000913.3", email=email, model=model)
 >>> orca.find_oriCs(show_info=True, show_plot=False)
 Accession    : NC_000913
@@ -43,9 +53,8 @@ In the case of *Escherichia coli* (*E. coli*) K-12, only one potential origin wa
 This repository also includes a pickled `SeqRecord` of the *E. coli* K-12 chromosome. If one wanted to use that, only a different constructor would have to be used.
 
 ```python
->>> import joblib
->>> from ORCA import ORCA
->>> model = joblib.load("data/output/machine_learning/24k_set_model.pkl")
+>>> from orcapy import ORCA, ORCA_RFC_model
+>>> model = ORCA_RFC_model()
 >>> orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
 >>> orca.find_oriCs(show_info=False, show_plot=False)
 ```
@@ -103,7 +112,7 @@ This folder also includes a pickled `SeqRecord` object of the *E. coli* K-12 chr
 
 This folder contains output from the various performance test we ran on ORCA. The machine_learning sub-folder contains the provided Random Forest Classifiers. Use the gzip and pickle from the standard Python library to load the models or, alternatively, use [joblib](https://joblib.readthedocs.io/en/stable/).
 
-- `ORCA_RFC_model.pkl.gz`: This model has been trained on the full DoriC 12.0 dataset.
+- `ORCA_RFC_model.pkl.gz`: This model has been trained on the full DoriC 12.0 dataset. This model is included with installation and can be called with the `ORCA_RFC_model` function.
 - `ORCA_RFC_model_70_percent.pkl.gz`: This model has been trained on roughly 70 % of the DoriC 12.0 dataset. First all the experimentally verified origins were subtracted and the remaining dataset was split 70:30 stratified. This model is has been included for posterity. Use the other model for any analyses.
 
 ## DnaA

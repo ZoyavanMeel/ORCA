@@ -1,3 +1,3 @@
-from orca import (BioFile, CurveProcessing, Plotter)
-from orca.ORCA import ORCA, example_use
-from orca.Peak import Peak
+from orcapy import (BioFile, CurveProcessing, Plotter)
+from orcapy.ORCA import ORCA, example_use, ORCA_RFC_model
+from orcapy.Peak import Peak

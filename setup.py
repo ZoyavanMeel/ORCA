@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name="orca",
-    version="1.0",
+    name="orcapy",
+    version="1.0.0",
     description="Tool for predicting the origin of replication on circular bacterial chromosomes",
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=["test", "Machine_learning", "data"]),
@@ -16,7 +16,7 @@ setup(
     author_email="zoyavanmeel@gmail.com",
     license="GPL-3.0",
     classifiers=[
-        "License :: GPL-3.0 License",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Programming Language :: Python :: 3.11",
         "Operating System :: OS Independent",
     ],
@@ -28,7 +28,7 @@ setup(
         "matplotlib >= 3.5.2"
     ],
     extras_require={
-        "dev": ["twine>=4.0.2"],
+        "dev": ["twine>=5.0.0"],
     },
-    python_requires=">=3.10",
+    python_requires=">=3.9",
 )

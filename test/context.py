@@ -1,6 +1,6 @@
 import os, sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "orca")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "orcapy")))
 
 from CurveProcessing import *
 from Plotter import *
