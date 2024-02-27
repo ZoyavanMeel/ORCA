@@ -1,6 +1,5 @@
 # Libraries
 import os
-import gzip
 import pickle
 import re
 import warnings
@@ -625,32 +624,3 @@ class ORCA:
             self.pretty_print_results()
         if show_plot:
             self.plot_oriC_curves()
-
-
-def ORCA_RFC_model():
-    """
-    Loads and returns ORCA's default Random Forest Classifier.
-    This model has been trained on all DoriC data. See the documentation
-    on GitHub for more information.
-    """
-    with gzip.open("src/ORCA_RFC_model.pkl.gz", "rb") as fh:
-        return pickle.load(fh)
-
-
-def example_use() -> ORCA:
-    """Example showcase. See code"""
-    email = 'real@email.address'
-
-    # Provided model is compressed due to GitHub's file size limits.
-    # Pickle file for the provided model. Model is around 189 MB uncompressed and 30 MB compressed,
-    # so it is too large to upload to GitHub.
-    model = ORCA_RFC_model()
-
-    # orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
-    orca = ORCA.from_accession("NC_014248", email=email, model=model)
-    orca.find_oriCs(show_info=True, show_plot=True)
-    return orca
-
-
-# if __name__ == '__main__':
-#     orca = example_use()
