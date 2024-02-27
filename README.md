@@ -1,6 +1,6 @@
 # ORCA
 
-Python scripts that predict and plot the location of the origin of replication (*oriC*) of circular bacterial genomes based on Z-curve, GC-skew, *dnaA*-box, and gene location analyses. This README will not explain all of ORCA's methods. All functions, main or helper, are labelled with docs-strings and type-hinting for ease-of-use. Most functions in ORCA can be used separately as well. For example, `calculate_disparities_curves` can be used outside of ORCA, too. As well as all functions for fetching files from NCBI, or plotter functions, etc. Please, see their provided docs-strings for more info.
+Python scripts that predict and plot the location of the origin of replication (*oriC*) of circular bacterial genomes based on Z-curve, GC-skew, *dnaA*-box, and gene location analyses. This README will not explain all of ORCA's methods. All functions, main or helper, are labelled with docs-strings and type-hinting for ease of use. Most functions in ORCA can be used separately as well. For example, `calculate_disparity_curves` can be used outside of ORCA, too. As well as all functions for fetching files from NCBI, or plotter functions, etc. Please, see their provided docs-strings for more info.
 
 ## Installing ORCApy
 
@@ -12,19 +12,27 @@ pip install orcapy
 
 Or download it directly from the PyPi website [here](https://pypi.org/project/orcapy/). The installation and download only include the files present in the `src` folder.
 
+To download the provided Random Forest Classifier, simply use:
+
+```sh
+wget https://github.com/ZoyavanMeel/ORCA/blob/main/data/output/machine_learning/ORCA_RFC_model.pkl.gz
+```
+
+Or use a similar method, like `curl`. You can also download it manually by going [here](https://github.com/ZoyavanMeel/ORCA/blob/main/data/output/machine_learning/ORCA_RFC_model.pkl.gz), clicking on the three horizontal dots in the top right and selecting 'Download'.
+
 ## ORCA class
 
-This script predicts the origin of replication for circular bacterial DNA. It makes use of a combination of [Z-curve](https://en.wikipedia.org/wiki/Z_curve) and [GC-skew](https://en.wikipedia.org/wiki/GC_skew), *dnaA*-box, and gene location analyses. You can load the required FASTA files yourself, or simply provide an accession and NCBI-account email and ORCA will fetch them. The docs-string of the function shows more information on what is needed to use ORCA. See the code for the function `example_use` for more information. **NOTE:** the model provided in this repository has been compressed due to file size limitations. This example also uses the [Joblib](https://joblib.readthedocs.io/en/stable/) package for unpickling the model. This is not necessary, and Python's standard pickle package can be used.
+This script predicts the origin of replication for circular bacterial DNA. It makes use of a combination of [Z-curve](https://en.wikipedia.org/wiki/Z_curve) and [GC-skew](https://en.wikipedia.org/wiki/GC_skew), *dnaA*-box, and gene location analyses. You can load the required FASTA files yourself, or simply provide an accession and NCBI-account email and ORCA will fetch them. The docs-string of the function shows more information on what is needed to use ORCA. See the [Example Use](#example-use-of-orca) section for more information. **NOTE:** the model provided in this repository has been compressed due to file size limitations. This example also uses the [Joblib](https://joblib.readthedocs.io/en/stable/) package for unpickling the model. This is not necessary, and Python's standard pickle and gzip package can be used as well.
 
 ### Input
 
 Please, make sure to load the proper file formats into the functions, otherwise ORCA will not work. A lot of invalid parameters will throw warnings or errors, but it is not improbable that a few were missed. More of ORCA's functionality and input methods are discussed in the paper.
 
-There are four valid input formats for ORCA. Provided one has an internet connection, ORCA can function using only an accession number. When using only an accession, ORCA will fetch the corresponding GenBank file from NCBI using Biopython's Entrez module. Please adhere to NCBI's rules on making use of their API. This module functions as a Python interface for NCBI's Entrez Direct. The version number of the accession can be specified. If this is omitted, the most recent version is automatically chosen. One can also provide the GenBank file themselves This file will be processed the same way, but does not require an internet connection.
+There are four valid input formats for ORCA. Provided one has an internet connection, ORCA can function using only an accession number (`from_accession`). When using only an accession, ORCA will fetch the corresponding GenBank file from NCBI using Biopython's Entrez module. Please adhere to NCBI's rules on making use of their API. This module functions as a Python interface for NCBI's Entrez Direct. The version number of the accession can be specified. If this is omitted, the most recent version is automatically chosen. One can also provide the GenBank file themselves (`from_gbk`). This file will be processed the same way, but does not require an internet connection.
 
-Another option is to provide Biopython SeqRecord objects. ORCA uses Biopython's SeqIO module for parsing the GenBank file. This means that input from GenBank will go through this module anyway and uses SeqRecords. Providing a SeqRecord that was made by parsing a Genbank file using this same module is therefore also possible. Pickled SeqRecord objects take up more memory, but they can be parsed quicker. This is a consideration that can be taken into account when processing large genomic datasets.
+Another option is to provide Biopython SeqRecord objects (`from_pkl`). ORCA uses Biopython's SeqIO module for parsing the GenBank file. This means that input from GenBank will go through this module anyway and uses SeqRecords. Providing a SeqRecord that was made by parsing a Genbank file using this same module is therefore also possible. Pickled SeqRecord objects take up more memory, but they can be parsed quicker. This is a consideration that can be taken into account when processing large genomic datasets.
 
-Lastly, one can also simply provide a DNA-sequence string. This same input method allows for indicating the location of the indicator genes. These gene locations are not inferred from the provided sequence and will have to be provided. This is the fastest input format, but takes the most work from the user. All input parameters are assumed to be in the correct specified format and will not be processed using Biopython. Further explanation on each of these formats can also be found in the documentation of the code.
+Lastly, one can also simply provide a DNA-sequence string (`from_string`). This same input method allows for indicating the location of the indicator genes. These gene locations are not inferred from the provided sequence and will have to be provided. This is the fastest input format, but takes the most work from the user. All input parameters are assumed to be in the correct specified format and will not be processed using Biopython. Further explanation on each of these formats can also be found in the documentation of the code.
 
 ### Example use of ORCA
 
@@ -34,9 +42,9 @@ It is possible to tune all parameters and train models for highly accurate predi
 
 ```python
 >>> import joblib
->>> from orcapy import ORCA, ORCA_RFC_model
+>>> from orcapy import ORCA
 >>> email = "example@email.com"
->>> model = ORCA_RFC_model()
+>>> model = joblib.load("path/to/model.pkl.gz")
 >>> orca = ORCA.from_accession("NC_000913.3", email=email, model=model)
 >>> orca.find_oriCs(show_info=True, show_plot=False)
 Accession    : NC_000913
@@ -46,6 +54,14 @@ G_scores     :      0.5
 D_scores     :      1.0
 oriC_middles :  3927479
 The best-scoring potential oriC was found at: 3927479 bp.
+```
+
+If you do not wish to use joblib, you can also open the model using:
+
+```python
+import gzip, pickle
+with gzip.open("path/to/model.pkl.gz", "rb") as fh:
+    model = pickle.load(fh)
 ```
 
 In the case of *Escherichia coli* (*E. coli*) K-12, only one potential origin was found and according to the model, this could also be classified as a true origin. Any prediction value >= 0.5, means that the model believes there is a 50 % or more that the corresponding origin is a true origin. It is possible that multiple candidate origins have a probability of being a true origin that is larger than 50 %. Then simply use the origin corresponding to the highest probability, as this was the origin that the model deemed most likely to be correct.
@@ -59,11 +75,13 @@ This repository also includes a pickled `SeqRecord` of the *E. coli* K-12 chromo
 >>> orca.find_oriCs(show_info=False, show_plot=False)
 ```
 
+There are four constructors in total: `from_accession`, `from_gbk`, `from_pkl`, `from_string`. Each comes with extensive documentation of how to use them. Once the `ORCA` object has been instantiated, call `find_oriCs` to analyse the sequence.
+
 ## ORCA's parameters
 
 The parameters listed below are parameters that can be used as they are or can be fine-tuned for specific use cases. The standard parameters reflect ORCA's performance as shown in the application note. Retraining of the Random Forest Classifier is recommended if any parameters are changed. Otherwise, the same performance as is the paper can not be guaranteed.
 
-- `dnaa_boxes`: If None, will use the consensus DnaA-box: `TTAT(A|C|G|T)CACA` (See Section: [DnaA](#dnaa)). Else, provide a list of 9 base strings. Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
+- `dnaa_boxes`: If None, will use the consensus DnaA-box: `TTAT(A|C|G|T)CACA` (see Section [DnaA](#dnaa)). Else, provide a list of 9 base strings. Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
 - `max_mismatches`: Maximum allowed mismatches allowed in a dnaa_box for it still to be read as such. Recommended max: 2. ORCA uses 0 for use with the consensus DnaA-box.
 - `genes_of_interest`: List of gene names to consider as 'oriC-proximal' and use for helping estimate the location of the oriC. This parameter is case insensitive.
 - `max_point_spread`: Maximum distance between points in a group can have when looking for connected groups across the disparity curves. Default is 5 % of the total chromosome length.
@@ -86,15 +104,25 @@ The `Peak` class. This class is used in handling potential *oriC*s. The `oriCs`-
 
 ## BioFile
 
-Script with useful functions for I/O. These include functions for downloading, parsing, and saving files.
+Script with useful functions for I/O. These include functions for downloading, parsing, and saving files. To use these function call:
+
+```python
+from orcapy import BioFile
+```
 
 ## Plotter
 
-There are 3 general functions in this file which can be used to plot any generic 1D-np.array. To use these functions, make sure to have [matplotlib](https://matplotlib.org/) installed
+There are 3 general functions in this file which can be used to plot any generic 1D-np.array. To use these functions, make sure to have [matplotlib](https://matplotlib.org/) installed.
 
 - `plot_Z_curve_3D`: Makes a 3D-plot of the Z-curve.
 - `plot_curves`: Can plot a maximum of four curves in a single 2D-plot. This one is useful for plotting single or multiple Z-curve or GC-skew components against each other.
 - `plot_skew`: Does the same as `plot_curves`, except only takes one array.
+
+To use these functions call:
+
+```python
+from orcapy import Plotter
+```
 
 ## Machine_learning
 
