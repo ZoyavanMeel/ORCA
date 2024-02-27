@@ -69,8 +69,7 @@ In the case of *Escherichia coli* (*E. coli*) K-12, only one potential origin wa
 This repository also includes a pickled `SeqRecord` of the *E. coli* K-12 chromosome. If one wanted to use that, only a different constructor would have to be used.
 
 ```python
->>> from orcapy import ORCA, ORCA_RFC_model
->>> model = ORCA_RFC_model()
+>>> from orcapy import ORCA
 >>> orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
 >>> orca.find_oriCs(show_info=False, show_plot=False)
 ```
