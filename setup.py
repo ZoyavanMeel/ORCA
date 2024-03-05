@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="orcapy",
-    version="1.0.0",
+    version="1.0.1",
     description="Tool for predicting the origin of replication on circular bacterial chromosomes",
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=["test", "Machine_learning", "data"]),
@@ -22,7 +22,7 @@ setup(
     ],
     install_requires=[
         "numpy >= 1.22.3",
-        "scikit-learn >= 1.2.0",
+        "scikit-learn >= 1.4.0",
         "biopython >= 1.79",
         "scipy >= 1.8.0",
         "matplotlib >= 3.5.2"
