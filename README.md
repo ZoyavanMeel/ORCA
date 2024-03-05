@@ -46,7 +46,7 @@ It is possible to tune all parameters and train models for highly accurate predi
 >>> email = "example@email.com"
 >>> model = joblib.load("path/to/model.pkl.gz")
 >>> orca = ORCA.from_accession("NC_000913.3", email=email, model=model)
->>> orca.find_oriCs(show_info=True, show_plot=False)
+>>> orca.find_oriCs(show_info=True, plot_path=None)
 Accession    : NC_000913
 predictions  :  0.99412
 Z_scores     :      1.0
@@ -66,12 +66,12 @@ with gzip.open("path/to/model.pkl.gz", "rb") as fh:
 
 In the case of *Escherichia coli* (*E. coli*) K-12, only one potential origin was found and according to the model, this could also be classified as a true origin. Any prediction value >= 0.5, means that the model believes there is a 50 % or more that the corresponding origin is a true origin. It is possible that multiple candidate origins have a probability of being a true origin that is larger than 50 %. Then simply use the origin corresponding to the highest probability, as this was the origin that the model deemed most likely to be correct.
 
-This repository also includes a pickled `SeqRecord` of the *E. coli* K-12 chromosome. If one wanted to use that, only a different constructor would have to be used.
+This repository also includes a pickled `SeqRecord` of the *E. coli* K-12 chromosome ([here](https://github.com/ZoyavanMeel/ORCA/blob/main/data/input/NC_000913_3.pkl), download like the RFC model). If one wanted to use that, only a different constructor would have to be used.
 
 ```python
 >>> from orcapy import ORCA
 >>> orca = ORCA.from_pkl("data/input/NC_000913_3.pkl", model=model)
->>> orca.find_oriCs(show_info=False, show_plot=False)
+>>> orca.find_oriCs(show_info=False, plot_path="path/to/plot.png")
 ```
 
 There are four constructors in total: `from_accession`, `from_gbk`, `from_pkl`, `from_string`. Each comes with extensive documentation of how to use them. Once the `ORCA` object has been instantiated, call `find_oriCs` to analyse the sequence.
@@ -94,7 +94,7 @@ The parameters listed below are parameters that can be used as they are or can b
 - [Pandas 1.5.3](https://pandas.pydata.org/)
 - [NumPy 1.24.2](https://numpy.org/)
 - [Biopython 1.80](https://biopython.org/)
-- [Scikit-learn 1.2.1](https://scikit-learn.org/)
+- [Scikit-learn 1.4.1](https://scikit-learn.org/)
 - [Matplotlib 3.6.3](https://matplotlib.org/)
 
 ## Peak class
@@ -103,7 +103,14 @@ The `Peak` class. This class is used in handling potential *oriC*s. The `oriCs`-
 
 ## BioFile
 
-Script with useful functions for I/O. These include functions for downloading, parsing, and saving files. To use these function call:
+Script with useful functions for I/O. These include functions for downloading, parsing, and saving files.
+
+- `save_gbk`: Fetches and saves the Genbank file of the given accession in the given path.
+- `save_pkl`: Fetches and saves the given accession in the given path as a pickled `SeqRecord` generated from parsing a Genbank file with Biopython.
+- `fetch_file`: Fetches the given accession in the provided file format from NCBI. Will return a `TextIOWrapper` to be used.
+- `parse_SeqRecord`: Extracts the locations of the provided genes of interest into a dictionary.
+
+To use these function call:
 
 ```python
 from orcapy import BioFile
