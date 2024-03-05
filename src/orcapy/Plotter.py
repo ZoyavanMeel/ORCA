@@ -5,20 +5,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import matplotlib
-matplotlib.use("TkAgg")
+matplotlib.use("Agg")
 
 
-def plot_Z_curve_3D(x: np.ndarray, y: np.ndarray, z: np.ndarray, name: Optional[str] = None):
+def plot_Z_curve_3D(path: str, x: np.ndarray, y: np.ndarray, z: np.ndarray, name: Optional[str] = None) -> None:
     """
     3D-plot function with name as title. `x`, `y`, and `z` should be the three components of the Z-curve.
 
     -----------------------------------------------------------------------
     Example
+    >>> from orcapy import Plotter, ORCA
     >>> import matplotlib.pyplot as plt
     >>> orca = ORCA.from_accession('NC_000913', 'example@email.com')
     >>> orca.find_oriCs()
-    >>> plot_curves_3D(orca.x, orca.y, orca.z, name=orca.accession)
-    >>> plt.show()
+    >>> Plotter.plot_curves_3D("path/to/plot.png", orca.x, orca.y, orca.z, name=orca.accession)
     """
     fig = plt.figure(figsize=(7, 7))
     ax = plt.axes(projection='3d')
@@ -29,13 +29,14 @@ def plot_Z_curve_3D(x: np.ndarray, y: np.ndarray, z: np.ndarray, name: Optional[
     ax.plot3D(x, y, z, c='b', linewidth=0.8)
     if name is not None:
         ax.set_title(f'Z-Curve: {name}', fontsize=10, loc='center', pad=20)
-    return fig
+    plt.savefig(path, dpi=500)
 
 
-def plot_curves(curves: tuple[np.ndarray], labels: list[str], peaks: Optional[list[int]], name: Optional[str] = None):
+def plot_curves(path: str, curves: tuple[np.ndarray], labels: list[str], peaks: Optional[list[int]], name: Optional[str] = None) -> None:
     """
     Plots up to 6 different y-axes onto a single figure. Ideal for displaying multiple disparity curves in a single plot.
     If displaying more than 3 diferent axes at once, some manual adjustment of the subplot paramenters might be needed.
+    - `path`   : string path to save location.
     - `curves` : list of lists with y-axis values.
     - `labels` : list of names of each curve in `curves`.
     - `peaks`  : optional, list with indices to plot onto the `curves`.
@@ -43,19 +44,19 @@ def plot_curves(curves: tuple[np.ndarray], labels: list[str], peaks: Optional[li
 
     -----------------------------------------------------------------------
     Example
+    >>> from orcapy import Plotter, ORCA
     >>> import matplotlib.pyplot as plt
     >>> orca = ORCA.from_accession('NC_000913', 'example@email.com')
     >>> orca.find_oriCs()
-    >>> plot_curves(curves=[orca.x, orca.y, orca.gc], labels=['$x_n$', '$y_n$', '$GC_n$'], peaks=orca.oriC_middles, name=orca.accession)
-    >>> plt.show()
+    >>> Plotter.plot_curves(path="path/to/plot.png", curves=[orca.x, orca.y, orca.gc], labels=['$x_n$', '$y_n$', '$GC_n$'], peaks=orca.oriC_middles, name=orca.accession)
 
     Alternatively call:
 
+    >>> from orcapy import ORCA
     >>> import matplotlib.pyplot as plt
     >>> orca = ORCA.from_accession('NC_000913', 'example@email.com')
     >>> orca.find_oriCs()
-    >>> orca.plot_oriC_curves()
-    >>> plt.show()
+    >>> orca.plot_oriC_curves(plot_path="path/to/plot.png")
     """
     x_len = str(len(curves[0]))
     if int(x_len[1]) <= 4:
@@ -144,18 +145,18 @@ def plot_curves(curves: tuple[np.ndarray], labels: list[str], peaks: Optional[li
         mode="expand",
         borderaxespad=0.
     )
-    return fig
+    plt.savefig(path, dpi=500)
 
 
-def plot_skew(skewArray: np.ndarray, peaks: list[int], name: str):
+def plot_skew(path: str, skew_array: np.ndarray, peaks: list[int], name: str) -> None:
     """Plots single skew diagram and its peaks"""
 
     fig = plt.figure()
     ax1 = plt.axes()
 
-    peaks_y = np.asarray([skewArray[i] for i in peaks])
+    peaks_y = np.asarray([skew_array[i] for i in peaks])
 
     ax1.set_title(f'GC-skew: {name}', fontsize=10, loc='center', pad=20)
-    ax1.plot(range(len(skewArray)), skewArray, 'r', zorder=1)
+    ax1.plot(range(len(skew_array)), skew_array, 'r', zorder=1)
     ax1.scatter(peaks, peaks_y, marker='X', c='k', zorder=2)
-    return fig
+    plt.savefig(path, dpi=500)

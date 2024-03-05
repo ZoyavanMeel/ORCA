@@ -4,7 +4,7 @@ import pickle
 import re
 import warnings
 from itertools import combinations, product
-from typing import Generator
+from typing import Generator, Optional
 
 import numpy as np
 from Bio import Seq, SeqIO
@@ -448,31 +448,41 @@ class ORCA:
             print(f'{attr:<{spacer_1}}:{results}')
         print("The best-scoring potential oriC was found at:", self.oriC_middles[self.best_oriC_idx], "bp.")
 
-    def plot_oriC_curves(self):
+    def plot_oriC_curves(self, plot_path: str) -> None:
         """
         Plot curves relevant to ORCA's analysis as well as all found oriCs.
         To be called after calling `find_oriCs` on an ORCA object.
-        See utils.Plotter for more plotting options.
+        See Plotter for more plotting options.
 
         --------------------------------
         Example:
 
-        >>> import matplotlib.pyplot as plt
+        >>> from orcapy import ORCA, Plotter
         >>> orca = ORCA.from_accession("NC_example.3", "your@email.com")
         >>> orca.find_oriCs()
-        >>> orca.plot_oriC_curves()
-        >>> plt.show()
+        >>> orca.plot_oriC_curves("path/to/plot.png")
 
         The same as calling:
 
-        >>> import matplotlib.pyplot as plt
+        >>> from orcapy import ORCA, Plotter
         >>> orca = ORCA.from_accession('NC_000913', 'example@email.com')
         >>> orca.find_oriCs()
-        >>> plot_curves(curves=[orca.x, orca.y, orca.gc], peaks=orca.oriC_middles, labels=['$x_n$', '$y_n$', '$GC_n$'], name=orca.accession)
-        >>> plt.show()
+        >>> Plotter.plot_curves(path="path/to/plot.png", curves=[orca.x, orca.y, orca.gc], peaks=orca.oriC_middles, labels=['$x_n$', '$y_n$', '$GC_n$'], name=orca.accession)
+
+        Also the same as calling:
+
+        >>> from orcapy import ORCA, Plotter
+        >>> orca = ORCA.from_accession("NC_example.3", "your@email.com")
+        >>> orca.find_oriCs(plot_path="path/to/plot.png")
         """
         self.__check_run_properly("oriC_middles", "Cannot plot curves.")
-        return Plotter.plot_curves([self.x, self.y, self.gc], ['$x_n$', '$y_n$', '$GC_n$'], self.oriC_middles, self.accession)
+        return Plotter.plot_curves(
+            path=plot_path,
+            curves=[self.x, self.y, self.gc],
+            labels=['$x_n$', '$y_n$', '$GC_n$'],
+            peaks=self.oriC_middles,
+            name=self.accession
+        )
 
     def _set_best_pot_oriC_idx(self) -> None:
         """
@@ -500,7 +510,7 @@ class ORCA:
                 break
         self.best_oriC_idx = max_idx_options[0]
 
-    def find_oriCs(self, show_info: bool = False, show_plot: bool = False) -> None:
+    def find_oriCs(self, show_info: bool = False, plot_path: Optional[str] = None) -> None:
         '''
         Locates potential oriCs on circular bacterial chromosomes based on Z-curve and GC-skew analysis, dnaA box analysis, and dnaA/dnaN gene locations.
         Three default window_sizes are used: 1, 3 and 5 % of the total genome length. See the README-file in the [GitHub repository](https://github.com/ZoyavanMeel/ORCA/)
@@ -511,54 +521,36 @@ class ORCA:
         - `show_info`:
             - If True, prints info of ALL found oriCs. Good and bad.
 
-        - `show_plot`:
-            - If True, shows plot of ALL found oriCs. Good and bad. Should not be used for analysis -> Make a separate plot for the best oriCs.
-            - Make sure to import `matplotlib` and call `plt.show()` after calling the `find_oriCs` function
+        - `plot_path`:
+            - If not `None`, makes a plot of ALL found oriCs. Good and bad. Should not be used for analysis -> Make a separate plot for the best oriCs.
+            - Will be saved to the specified file path.
 
         Results
         -------
         Adds new instance variables to the ORCA object based on the analysis.
 
         All attributes after calling `find_oriCs`:
-        - `accession`:
-            - `str` Accesssion number.
-        - `version`:
-            - `int` Accession version number.
-        - `input_dnaa_boxes`:
-            - `list[str]` List of user-given dnaA-boxes to look for.
-        - `dnaa_boxes`:
-            - `list[str]` List of all possible accepted dnaA-boxes based on the given dnaA-boxes and the allowed `max_mismatches`.
-        - `dnaa_dict`:
-            - `dict[str : list[int]]` Dictionary of dnaA-box indexes on the DNA sequence.
-        - `max_mismatches`:
-            - `int` Maximum allowed mismatches in the proposed dnaA-boxes.
-        - `genes_of_interest`:
-            - `list[str]` List of user-given genes that relate to the location of oriCs.
-        - `gene_locations`:
-            - `list[tuple[str, Peak]]` List of locations of the `genes_of_interest`.
-        - `NCBI_oriC`:
-            - `list[tuple[str, Peak]]` Only created if the file/accesssion analysed had an annotated 'rep_origin'
-        - `windows`:
-            - `list[int]` Windows surrounding potential oriCs. Used for filtering, distance approximation, and generalisations
-        - `max_point_spread`:
-            - `float` Maximum distance between points in a component as a fraction of the length of the sequence
-        - `model`:
-            - `sklearn.classifier` Scikit-learn classifier used for predicting the significance of the found oriCs.
-        - `seq`:
-            - `str` String representation of the DNA sequence
-        - `seq_len`:
-            - `int` Length of the DNA sequence
-        - `x`, `y`, `z`, `gc`:
-            - `numpy.ndarray` Three components of the Z-curve as well as the GC-skew curve
-        - `oriCs`:
-            - `list[Peak]` List of Peak object of the predicted origin locations. Consult its scores and prediction for analysis of its validity.
-        - `oriC_middles`:
-            - `list[int]` List of only the middle posistion point of each predicted oriC in the same order as `oriCs`.
-        - `Z_scores`, `G_scores`, `D_scores`:
-            - `list[float]` List of scores based on the analysis of the Z-curve, gene locations, and dnaA-box regions. Consult the paper
-            for more information. In the same order as `oriCs`.
-        - `predictions`:
-            - `list[float]` List of decision values decided by the given `model`. In the same order as `oriCs`.
+        - `accession`                           : `str`                     Accesssion number.
+        - `version`                             : `int`                     Accession version number.
+        - `input_dnaa_boxes`                    : `list[str]`               List of user-given dnaA-boxes to look for.
+        - `dnaa_boxes`                          : `list[str]`               List of all possible accepted dnaA-boxes based on the given dnaA-boxes and the allowed `max_mismatches`.
+        - `dnaa_dict`                           : `dict[str : list[int]]`   Dictionary of dnaA-box indexes on the DNA sequence.
+        - `max_mismatches`                      : `int`                     Maximum allowed mismatches in the proposed dnaA-boxes.
+        - `genes_of_interest`                   : `list[str]`               List of user-given genes that relate to the location of oriCs.
+        - `gene_locations`                      : `list[tuple[str, Peak]]`  List of locations of the `genes_of_interest`.
+        - `NCBI_oriC`                           : `list[tuple[str, Peak]]`  Only if the file/accesssion analysed had an annotated 'rep_origin', else `None`
+        - `windows`                             : `list[int]`               Windows surrounding potential oriCs. Used for filtering, distance approximation, and generalisations
+        - `max_point_spread`                    : `float`                   Maximum distance between points in a component as a fraction of the length of the sequence
+        - `model`                               : `sklearn.classifier`      Scikit-learn classifier used for predicting the significance of the found oriCs.
+        - `seq`                                 : `str`                     String representation of the DNA sequence
+        - `seq_len`                             : `int`                     Length of the DNA sequence
+        - `x`, `y`, `z`, `gc`                   : `numpy.ndarray`           Three components of the Z-curve as well as the GC-skew curve
+        - `oriCs`                               :`list[Peak]`               List of Peak object of the predicted origin locations. Consult its scores and prediction
+                                                                            for analysis of its validity.
+        - `oriC_middles`                        : `list[int]`               List of only the middle posistion point of each predicted oriC in the same order as `oriCs`.
+        - `Z_scores`, `G_scores`, `D_scores`    : `list[float]`             List of scores based on the analysis of the Z-curve, gene locations, and dnaA-box regions.
+                                                                            Consult the paper for more information. In the same order as `oriCs`.
+        - `predictions`                         : `list[float]`             List of decision values decided by the given `model`. In the same order as `oriCs`.
 
         --------------------------
         Example:
@@ -622,5 +614,5 @@ class ORCA:
 
         if show_info:
             self.pretty_print_results()
-        if show_plot:
-            self.plot_oriC_curves()
+        if plot_path is not None:
+            self.plot_oriC_curves(plot_path)

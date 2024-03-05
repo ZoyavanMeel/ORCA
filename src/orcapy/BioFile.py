@@ -66,6 +66,8 @@ def parse_SeqRecord(record: SeqIO.SeqRecord, genes_of_interest: list[str]) -> di
                 f"{accession}.{version}: found an annotated oriC in the provided file. Saved in 'NCBI_oriC' attribute of the ORCA object.",
                 UserWarning
             )
+    if len(seq_dict["NCBI_oriC"]) == 0:
+        seq_dict['NCBI_oriC'] = None
     return seq_dict
 
 
