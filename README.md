@@ -15,10 +15,10 @@ Or download it directly from the PyPi website [here](https://pypi.org/project/or
 To download the provided Random Forest Classifier, simply use:
 
 ```sh
-wget https://github.com/ZoyavanMeel/ORCA/blob/main/data/output/machine_learning/ORCA_RFC_model.pkl.gz
+wget https://github.com/ZoyavanMeel/ORCA/blob/main/data/output/machine_learning/ORCA_RFC_model_1_4_0.pkl.gz
 ```
 
-Or use a similar method, like `curl`. You can also download it manually by going [here](https://github.com/ZoyavanMeel/ORCA/blob/main/data/output/machine_learning/ORCA_RFC_model.pkl.gz), clicking on the three horizontal dots in the top right and selecting 'Download'.
+Or use a similar method, like `curl`. You can also download it manually by going [here](https://github.com/ZoyavanMeel/ORCA/blob/main/data/output/machine_learning/ORCA_RFC_model_1_4_0.pkl.gz), clicking on the three horizontal dots in the top right and selecting 'Download'. See the section [Data Output](#output) for more provided models.
 
 ## ORCA class
 
@@ -144,10 +144,10 @@ This folder also includes a pickled `SeqRecord` object of the *E. coli* K-12 chr
 
 ### output
 
-This folder contains output from the various performance test we ran on ORCA. The machine_learning sub-folder contains the provided Random Forest Classifiers. Use the gzip and pickle from the standard Python library to load the models or, alternatively, use [joblib](https://joblib.readthedocs.io/en/stable/).
+This folder contains output from the various performance test we ran on ORCA. The machine_learning sub-folder contains the provided Random Forest Classifiers. Use the gzip and pickle from the standard Python library to load the models or, alternatively, use [joblib](https://joblib.readthedocs.io/en/stable/). Please be mindful of your Scikit-learn version, as models are not always backwards-compatible.
 
-- `ORCA_RFC_model.pkl.gz`: This model has been trained on the full DoriC 12.0 dataset. This model is included with installation and can be called with the `ORCA_RFC_model` function.
-- `ORCA_RFC_model_70_percent.pkl.gz`: This model has been trained on roughly 70 % of the DoriC 12.0 dataset. First all the experimentally verified origins were subtracted and the remaining dataset was split 70:30 stratified. This model is has been included for posterity. Use the other model for any analyses.
+- `ORCA_RFC_model_1_4_0.pkl.gz`: This model has been trained on the full DoriC 12.0 dataset. 1_4_0 refers to the scikit-learn version that was used to train the model (1.4.0). This repository also contains a fully trained model on scikit-learn 1.2.1.
+- `ORCA_RFC_model_70_percent.pkl.gz`: This model has been trained on roughly 70 % of the DoriC 12.0 dataset. First all the experimentally verified origins were subtracted and the remaining dataset was split 70:30 stratified. This model is has been included for posterity. Use the other model for any analyses. This model was trained on scikit-learn version 1.2.1.
 
 ## DnaA
 
