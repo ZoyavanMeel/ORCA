@@ -82,7 +82,7 @@ The parameters listed below are parameters that can be used as they are or can b
 
 - `dnaa_boxes`: If None, will use the consensus DnaA-box: `TTAT(A|C|G|T)CACA` (see Section [DnaA](#dnaa)). Else, provide a list of 9 base strings. Example input: `['AAAAAAAAA', 'TTTTTTTTT']`.
 - `max_mismatches`: Maximum allowed mismatches allowed in a dnaa_box for it still to be read as such. Recommended max: 2. ORCA uses 0 for use with the consensus DnaA-box.
-- `genes_of_interest`: List of gene names to consider as 'oriC-proximal' and use for helping estimate the location of the oriC. This parameter is case insensitive.
+- `genes_of_interest`: List of gene names to consider as 'oriC-proximal' and use for helping estimate the location of the *oriC*. This parameter is case insensitive.
 - `max_point_spread`: Maximum distance between points in a group can have when looking for connected groups across the disparity curves. Default is 5 % of the total chromosome length.
 - `windows`: The windows around peaks of skew curves to consider. Defaults are 1, 3, and 5 % of the total chromosome length. ORCA checks each of the given windows.
 - `model`: A fitted scikit-learn classifier. Recommended to use the one provided on in this repository.
@@ -132,13 +132,13 @@ from orcapy import Plotter
 
 ## Machine_learning
 
-This folder contains a lot of data used in analysing, training, and testing ORCA and its Random Forest Classifier. The DoriC data can be downloaded from: <http://tubic.tju.edu.cn/doric/public/index.php> on May 16th, 2023. Each script comes with docs-string explaining their functionality.
+This folder contains all of the code used in analysing, training, and testing ORCA and its Random Forest Classifier. Each script comes with docs-string explaining their functionality. A copy of this folder is available in Zenodo, at <https://dx.doi.org/10.5281/zenodo.10888686>.
 
 ## data
 
 ### input
 
-This folder contains all the input data. This includes the data from DoriC 12.0. It also includes the `experimental_dataset` CSV. This is a collection of oriCs that have been experimentally verified. It also includes sources for each chromosome. This dataset was made in order to check the quality of DoriC.
+This folder contains all the input data. This includes the data from DoriC 12.0. The DoriC data were downloaded from: <http://tubic.tju.edu.cn/doric/public/index.php> on May 16th, 2023, but have also been preserved in Zenodo, at <https://dx.doi.org/10.5281/zenodo.10888580>. This folder also includes the `experimental_dataset` CSV. This is a collection of *oriC*s that have been experimentally verified. It also includes sources for each chromosome. This dataset was made in order to check the quality of DoriC.
 
 This folder also includes a pickled `SeqRecord` object of the *E. coli* K-12 chromosome. This file was used for quick testing and demonstration.
 
