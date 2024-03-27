@@ -1,6 +1,8 @@
 """Script to visualise the dicision boundary"""
 
-import os, sys
+from _4_validate_train_model import load_data_labels_from_df, load_data_labels_from_path
+import os
+import sys
 import time
 
 import matplotlib.pyplot as plt
@@ -12,14 +14,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import auc
 
 MODEL_PATH = "data/output/machine_learning/24k_set_model.pkl.gz"
-DATA_PATH  = "data/output/machine_learning/labels.csv"
-PLOT_PATH  = "Machine_learning/DoriC_pairplot_06.png"
+DATA_PATH = "data/output/machine_learning/labels.csv"
+PLOT_PATH = "Machine_learning/DoriC_pairplot_06.png"
 
 RANDOM_STATE = 42
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
-
-from _4_validate_train_model import load_data_labels_from_df, load_data_labels_from_path
 
 
 def reduce_dimensions_and_plot_them():
@@ -41,12 +41,16 @@ def reduce_dimensions_and_plot_them():
     # print("Done with saving:", time.perf_counter() - start)
 
     start = time.perf_counter()
-    plt.scatter(x=data[data['correct'] == 1]['TSNE_x'], y=data[data['correct'] == 1]['TSNE_y'], color='b', marker='.', s=0.1)
-    sns.kdeplot(x=data[data['correct'] == 1]['TSNE_x'], y=data[data['correct'] == 1]['TSNE_y'], fill=True, alpha=0.7, cmap='Blues')
+    plt.scatter(x=data[data['correct'] == 1]['TSNE_x'], y=data[data['correct'] == 1]
+                ['TSNE_y'], color='b', marker='.', s=0.1)
+    sns.kdeplot(x=data[data['correct'] == 1]['TSNE_x'], y=data[data['correct'] == 1]
+                ['TSNE_y'], fill=True, alpha=0.7, cmap='Blues')
     print("Done with kde 1:", time.perf_counter() - start)
     start = time.perf_counter()
-    plt.scatter(x=data[data['correct'] == 0]['TSNE_x'], y=data[data['correct'] == 0]['TSNE_y'], color='r', marker='.', s=0.1)
-    sns.kdeplot(x=data[data['correct'] == 0]['TSNE_x'], y=data[data['correct'] == 0]['TSNE_y'], fill=True, alpha=0.5, cmap='Reds')
+    plt.scatter(x=data[data['correct'] == 0]['TSNE_x'], y=data[data['correct'] == 0]
+                ['TSNE_y'], color='r', marker='.', s=0.1)
+    sns.kdeplot(x=data[data['correct'] == 0]['TSNE_x'], y=data[data['correct'] == 0]
+                ['TSNE_y'], fill=True, alpha=0.5, cmap='Reds')
     print("Done with kde 2:", time.perf_counter() - start)
     start = time.perf_counter()
     plt.show()
@@ -58,6 +62,7 @@ def infer_cmap(color):
         return 'Blues'
     elif color == (1, 0.418, 0.425):
         return 'Reds'
+
 
 def kde_hue(x, y, **kws):
     """Custom plot function to apply separate cmap coloring to each class in the classification problem."""
@@ -77,15 +82,15 @@ def plot_pairgrid() -> None:
     start = time.perf_counter()
 
     color_dict = {
-        True  : (0.413, 0.571, 1),
-        False : (1, 0.418, 0.425)
+        True: (0.413, 0.571, 1),
+        False: (1, 0.418, 0.425)
     }
 
     print("Initialising PairGrid...", end="")
     g = sns.PairGrid(data, hue='correct', palette=color_dict, despine=False)
     print(f"Done! ({time.perf_counter() - start:.3f})")
     start = time.perf_counter()
-    
+
     print("Plotting lower half.....", end="")
     g = g.map_lower(kde_hue, alpha=0.6)
     print(f"Done! ({time.perf_counter() - start:.3f})")
@@ -106,23 +111,23 @@ def plot_pairgrid() -> None:
 
     for i, ax in enumerate(g.axes.flat):
         # set xticks
-        if (i+1)%4 == 0:
-            ax.set_xticks([i for i in range(-2,13, 2)])
+        if (i+1) % 4 == 0:
+            ax.set_xticks([i for i in range(-2, 13, 2)])
             ax.set_xlim(-2, 12)
         else:
-            ax.set_xticks([i/10-0.2 for i in range(0,15, 2)])
+            ax.set_xticks([i/10-0.2 for i in range(0, 15, 2)])
             ax.set_xlim(-0.2, 1.2)
-        
+
         # set yticks
         if i not in [12, 13, 14, 15]:
-            ax.set_yticks([i/10-0.2 for i in range(0,15, 2)])
+            ax.set_yticks([i/10-0.2 for i in range(0, 15, 2)])
             ax.set_ylim(-0.2, 1.2)
         else:
-            ax.set_yticks([i for i in range(-2,13, 2)])
+            ax.set_yticks([i for i in range(-2, 13, 2)])
             ax.set_ylim(-2, 12)
     print(f"Done! ({time.perf_counter() - start:.3f})")
     start = time.perf_counter()
-    
+
     print("Saving figure...........", end="")
     plt.savefig(PLOT_PATH, dpi=1200)
     print(f"Done! ({time.perf_counter() - start:.3f})")
@@ -158,7 +163,6 @@ def precision_recall_plot() -> None:
 
     plt.minorticks_on()
     plt.show()
-
 
 
 if __name__ == "__main__":

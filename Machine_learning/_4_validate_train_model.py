@@ -1,7 +1,7 @@
 """
-Script for fine-tuning the SVM scored on precision, recall, and accuracy using a stratified K-fold cross-validation.
+Script for fine-tuning the RFC scored on precision, recall, and accuracy using a stratified K-fold cross-validation.
 The cross-validation is stratified to keep the distributions of the train and test splits as similar as possible.
-The best parameters are used to train the SVC on the entire dataset and is saved for use in ORCA.
+The best parameters are used to train the RFC on the entire dataset and is saved for use in ORCA.
 """
 
 import gzip
@@ -24,12 +24,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
 RANDOM_STATE = 42
-K            = 5
-PROCESSES    = None #os.cpu_count() - 1 # Number of processes started by the gridsearch
+K = 5
+PROCESSES = None  # os.cpu_count() - 1 # Number of processes started by the gridsearch
 
-DATA_PATH_DORIC   = "data/output/machine_learning/labels.csv"
+DATA_PATH_DORIC = "data/output/machine_learning/labels.csv"
 DATA_PATH_EXP_SET = "data/output/machine_learning/labels_against_NCBI.csv"
-MODEL_OUT_PATH    = "data/output/machine_learning/ORCA_RFC_model.pkl"
+MODEL_OUT_PATH = "data/output/machine_learning/ORCA_RFC_model_1_4_0.pkl"
 
 
 def load_data_labels_from_path(path: str) -> tuple[pd.DataFrame, pd.Series]:
@@ -37,11 +37,12 @@ def load_data_labels_from_path(path: str) -> tuple[pd.DataFrame, pd.Series]:
     # !!! Keep this column order! This is the same order as ORCA will input the features when trying to predict.
     # ORCA uses a model trained on numpy array instead of a pandas dataframe.
     X = df[['Z_score', 'G_score', 'D_score']]
-    
+
     # Feature-scaling does not provide any better performance
     # X_scaled = StandardScaler().fit_transform(X)
     y = df['correct']
     return X, y
+
 
 def load_data_labels_from_df(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     X = df[['Z_score', 'G_score', 'D_score']]
@@ -52,19 +53,20 @@ def load_data_labels_from_df(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]
 def validate_model(X: pd.DataFrame, y: pd.Series, classifier, k: int) -> dict:
     '''Cross-validates a given classifier in `k` folds based on accuracy, precision, and recall. Returns a dictionary with the results of each fold'''
     scoring = {
-        'precision' : make_scorer(precision_score),
-        'recall' : make_scorer(recall_score),
+        'precision': make_scorer(precision_score),
+        'recall': make_scorer(recall_score),
     }
 
     k_fold = StratifiedKFold(n_splits=k, shuffle=True, random_state=RANDOM_STATE)
 
-    return cross_validate(estimator=classifier, X=X, y=y, cv=k_fold, scoring=scoring) 
+    return cross_validate(estimator=classifier, X=X, y=y, cv=k_fold, scoring=scoring)
 
 
 def fine_tune(X: pd.DataFrame, y: pd.Series, model, parameters: dict, n_jobs: int, refit_strategy: Callable, verbose: int = -1) -> GridSearchCV:
     cv = StratifiedKFold(n_splits=K, shuffle=True, random_state=RANDOM_STATE)
     start = time.perf_counter()
-    grid_search = GridSearchCV(model, parameters, cv=cv, n_jobs=n_jobs, verbose=verbose, scoring=["precision", "recall"], refit=refit_strategy).fit(X, y)
+    grid_search = GridSearchCV(model, parameters, cv=cv, n_jobs=n_jobs, verbose=verbose,
+                               scoring=["precision", "recall"], refit=refit_strategy).fit(X, y)
     # grid_search = RandomizedSearchCV(model, parameters, n_iter=10, cv=cv, n_jobs=n_jobs, verbose=verbose, scoring=["precision", "recall"], refit=refit_strategy, random_state=RANDOM_STATE).fit(X, y)
     print("TIME: ", time.perf_counter() - start)
     return grid_search
@@ -137,7 +139,7 @@ def refit_strategy(cv_results: dict[str, np.ndarray]) -> int:
         "we keep the model with the highest recall:\n\n"
         f"{high_precision_cv_results.loc[high_precision_cv_results['mean_test_recall'].idxmax()]}"
     )
-    return high_precision_cv_results["mean_test_recall"].idxmax()    
+    return high_precision_cv_results["mean_test_recall"].idxmax()
 
 
 def main_tuning() -> None:
@@ -145,26 +147,26 @@ def main_tuning() -> None:
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=RANDOM_STATE, stratify=y)
 
-    # model_parameters = {
-    #     'bootstrap': [True, False],
-    #     'max_depth': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, None],
-    #     'max_features': ['log2', 'sqrt'],
-    #     'min_samples_leaf': [1, 2, 4],
-    #     'min_samples_split': [2, 5, 10],
-    #     'n_estimators': [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]
-    # }
-
     model_parameters = {
-        'kernel': ['rbf', 'sigmoid'],
-        'C': [10, 50, 100, 500, 1000, 1500, 2000],
-        'gamma': ['scale', 'auto', 0.01, 0.05, 0.1, 0.15, 1]
+        'bootstrap': [True, False],
+        'max_depth': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, None],
+        'max_features': ['log2', 'sqrt'],
+        'min_samples_leaf': [1, 2, 4],
+        'min_samples_split': [2, 5, 10],
+        'n_estimators': [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]
     }
+
+    # model_parameters = {
+    #     'kernel': ['rbf', 'sigmoid'],
+    #     'C': [10, 50, 100, 500, 1000, 1500, 2000],
+    #     'gamma': ['scale', 'auto', 0.01, 0.05, 0.1, 0.15, 1]
+    # }
 
     print("Start gridsearch")
     grid_search_model = fine_tune(
         X=X_train,
         y=y_train,
-        model=SVC(random_state=RANDOM_STATE),#RandomForestClassifier(random_state=RANDOM_STATE),
+        model=RandomForestClassifier(random_state=RANDOM_STATE),  # SVC(random_state=RANDOM_STATE)
         parameters=model_parameters,
         refit_strategy=refit_strategy,
         n_jobs=PROCESSES,
@@ -183,7 +185,7 @@ def main_tuning() -> None:
 
 def main_DoriC_vs_exp_set() -> None:
 
-    DoriC   = pd.read_csv(DATA_PATH_DORIC)
+    DoriC = pd.read_csv(DATA_PATH_DORIC)
     exp_set = pd.read_csv(DATA_PATH_EXP_SET)
 
     # only one version per accession in dataset, no need to check version
@@ -249,7 +251,6 @@ def main_save_model() -> None:
         pickle.dump(RFC_model, fh)
 
     joblib.dump(RFC_model, MODEL_OUT_PATH)
-
 
 
 if __name__ == '__main__':

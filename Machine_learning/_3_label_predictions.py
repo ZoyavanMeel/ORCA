@@ -1,28 +1,29 @@
 """This script is made in order to label the values of the ORCA scores according to the ground truths (DoriC or experimentally verified)."""
 
-import os, sys
+from Peak import Peak
+from _1_download_dataset import load_data
+import os
+import sys
 import pandas as pd
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-from _1_download_dataset import load_data
-from Peak import Peak
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
 
-GROUND_TRUTHS        = ['data/input/DoriC_chromosome_circular.csv', 'data/input/DoriC_complete_circular.csv']
+GROUND_TRUTHS = ['data/input/DoriC_chromosome_circular.csv', 'data/input/DoriC_complete_circular.csv']
 INDICATOR_VALUES_CSV = "data/output/doric_set_no_model_orca.csv"
-OUT_FILE_LABELS      = "data/output/machine_learning/labels.csv"
+OUT_FILE_LABELS = "data/output/machine_learning/labels.csv"
 
 
 def label(indicator_values_csv: str, ground_truth_csvs: list[str], output_csv: str) -> None:
     """Compare all possible found oriCs by ORCA to the ground truth oriCs for the corresponding accession.
     If the predicted origin is further than 2.5% of the total genome length removed from the ground truth,
     it gets labelled as a `False` prediction. If it is within this distance, it gets labelled as a `True` prediction.
-    
+
     This method outputs a CSV with the given name that can be used for training ML models."""
 
     gt_df = load_data(*ground_truth_csvs)
@@ -30,7 +31,7 @@ def label(indicator_values_csv: str, ground_truth_csvs: list[str], output_csv: s
 
     gt_df.drop(labels=['oric_seq', 'lineage'], axis=1, inplace=True)
     iv_df['nc'] = iv_df['accession'] + '.' + iv_df['version'].map(str)
-    
+
     iv_df['nc'].astype('string')
     gt_df['nc'].astype('string')
 
@@ -39,21 +40,22 @@ def label(indicator_values_csv: str, ground_truth_csvs: list[str], output_csv: s
     gt_df['middles'] = gt_df.apply(lambda x: Peak.calc_middle(x.oric_start, x.oric_end, x.seq_len), axis=1)
 
     label_dict = {
-        'accession'    : [],
-        'version'      : [],
-        'pot_oriC_num' : [], # e.g. if `total_pot` = 5, then pot_oriC_num is unique (1 through 5) for each of those 5 potential oriCs
-        'Z_score'      : [],
-        'G_score'      : [],
-        'D_score'      : [],
-        'total_pot'    : [], # how many other potential oriCs did ORCA think were on this genome?
-        'correct'      : []
+        'accession': [],
+        'version': [],
+        # e.g. if `total_pot` = 5, then pot_oriC_num is unique (1 through 5) for each of those 5 potential oriCs
+        'pot_oriC_num': [],
+        'Z_score': [],
+        'G_score': [],
+        'D_score': [],
+        'total_pot': [],  # how many other potential oriCs did ORCA think were on this genome?
+        'correct': []
     }
 
     for _, sample_original in iv_df.iterrows():
         sample = sample_original.copy()
         sample.dropna(inplace=True)
         ORCA_oriC_cols = [i for i in sample.axes[0] if 'oriC_middle_' in i]
-        ORCA_peaks = [ Peak( int(sample[ORCA_oriC_cols[i]]), sample['seq_len'], 0) for i in range(len(ORCA_oriC_cols)) ]
+        ORCA_peaks = [Peak(int(sample[ORCA_oriC_cols[i]]), sample['seq_len'], 0) for i in range(len(ORCA_oriC_cols))]
 
         # Loop over each potential oriC that ORCA found to check if it is correct
         for i, peak in enumerate(ORCA_peaks):
@@ -80,7 +82,6 @@ def label(indicator_values_csv: str, ground_truth_csvs: list[str], output_csv: s
     # Output the CSV
     # print(pd.DataFrame(label_dict))
     pd.DataFrame(label_dict).to_csv(output_csv, index=False)
-    
 
 
 def main():

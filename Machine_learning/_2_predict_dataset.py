@@ -1,29 +1,31 @@
 """Script for predicting a large dataset using ORCA. This script assumes all data to be in a folder of pickle files."""
 
+import BioFile as bf
+from ORCA import ORCA
 import multiprocessing as mp
 from functools import partial
-import os, sys, csv, joblib
+import os
+import sys
+import csv
+import joblib
 import numpy as np
 import pandas as pd
 from typing import Union
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-from ORCA import ORCA
-import BioFile as bf
-
 
 # Set these before running
 CLUSTER = "/tudelft.net/staff-umbrella/GeneLocations/ZoyavanMeel/ORCA/"
 
-INPUT_PATH     = CLUSTER + 'data/output/doric_set_no_model_orca_pkl'
+INPUT_PATH = CLUSTER + 'data/output/doric_set_no_model_orca_pkl'
 CSV_OUT_FOLDER = CLUSTER + 'data/output/doric_set_no_model_orca_csvs'
-OUT_FILE_PATH  = CLUSTER + 'data/output/doric_set_no_model_orca.csv'
+OUT_FILE_PATH = CLUSTER + 'data/output/doric_set_no_model_orca.csv'
 
-CPUS           = 20
-MAX_ORICS      = 10 # Assumption: No more than 10 oriC for a single organism are predicted
+CPUS = 20
+MAX_ORICS = 10  # Assumption: No more than 10 oriC for a single organism are predicted
 
-MODEL = None # joblib.load('Machine_Learning/exp_train_model.pkl')
+MODEL = None  # joblib.load('Machine_Learning/exp_train_model.pkl')
 
 
 def predict_pkl_to_csv(path: str, csv_path: str, max_oriCs: int):
@@ -42,7 +44,7 @@ def predict_pkl_to_csv(path: str, csv_path: str, max_oriCs: int):
     orca.find_oriCs()
 
     row = []
-    row.append(orca.accession) 
+    row.append(orca.accession)
     row.append(orca.version)
     row.append(orca.seq_len)
 
@@ -65,12 +67,12 @@ def predict_pkl_to_csv(path: str, csv_path: str, max_oriCs: int):
 
 
 def predict_dataset(
-        path_folder: str,
-        csv_out_folder: str,
-        out_file_path: str,
-        cpus: Union[int, None],
-        max_oriCs: int
-    ):
+    path_folder: str,
+    csv_out_folder: str,
+    out_file_path: str,
+    cpus: Union[int, None],
+    max_oriCs: int
+):
 
     paths = [os.path.join(path_folder, path) for path in os.listdir(path_folder)]
     prepped_prediction = partial(predict_pkl_to_csv, csv_path=csv_out_folder, max_oriCs=max_oriCs)
