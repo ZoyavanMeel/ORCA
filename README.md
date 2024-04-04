@@ -1,6 +1,6 @@
 # ORCA
 
-Python scripts that predict and plot the location of the origin of replication (*oriC*) of circular bacterial genomes based on Z-curve, GC-skew, *dnaA*-box, and gene location analyses. This README will not explain all of ORCA's methods. All functions, main or helper, are labelled with docs-strings and type-hinting for ease of use. Most functions in ORCA can be used separately as well. For example, `calculate_disparity_curves` can be used outside of ORCA, too. As well as all functions for fetching files from NCBI, or plotter functions, etc. Please, see their provided docs-strings for more info.
+This repository contains the code for ORCA as described in our application note, [Predicting replication origins in circular prokaryotic chromosomes](https://doi.org/10.1101/2024.03.28.587133). This repository contains the package ORCApy which is a collection of scripts that predict and plot the location of the origin of replication (*oriC*) of circular bacterial genomes based on Z-curve, GC-skew, *dnaA*-box, and gene location analyses. This README will not explain all of ORCA's methods. All functions, main or helper, are labelled with docs-strings and type-hinting for ease of use. Most functions in ORCA can be used separately as well. For example, `calculate_disparity_curves` can be used outside of ORCA, too. As well as all functions for fetching files from NCBI, or plotter functions, etc. Please, see their provided docs-strings for more info.
 
 ## Installing ORCApy
 
