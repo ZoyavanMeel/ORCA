@@ -2,6 +2,21 @@
 
 This repository contains the code for ORCA as described in our application note, [Predicting replication origins in circular prokaryotic chromosomes](https://doi.org/10.1101/2024.03.28.587133). This repository contains the package ORCApy which is a collection of scripts that predict and plot the location of the origin of replication (*oriC*) of circular bacterial genomes based on Z-curve, GC-skew, *dnaA*-box, and gene location analyses. This README will not explain all of ORCA's methods. All functions, main or helper, are labelled with docs-strings and type-hinting for ease of use. Most functions in ORCA can be used separately as well. For example, `calculate_disparity_curves` can be used outside of ORCA, too. As well as all functions for fetching files from NCBI, or plotter functions, etc. Please, see their provided docs-strings for more info.
 
+To cite ORCA, please use:
+
+```
+@article{vanmeelORCAPredictingReplication2024,
+  title = {{{ORCA}}: {{Predicting}} Replication Origins in Circular Prokaryotic Chromosomes},
+  author = {{van Meel}, Zoya and Baaijens, Jasmijn A.},
+  date = {2024-03-30},
+  doi = {10.1101/2024.03.28.587133},
+  url = {https://www.biorxiv.org/content/10.1101/2024.03.28.587133v1},
+}
+```
+
+> Z. van Meel and J. A. Baaijens, “ORCA: Predicting replication origins in circular prokaryotic chromosomes,” Mar. 30, 2024, bioRxiv. doi: 10.1101/2024.03.28.587133.
+
+
 ## Installing ORCApy
 
 To install ORCApy, simply use:
@@ -162,3 +177,4 @@ We use the first entry in the table below and allow for 0 mismatches in this seq
 | (T\|C)(T\|C)(A\|T\|C)T(A\|C)C(A\|G)(A\|C\|T)(A\|C)               | [[8]](https://doi.org/10.1007/BF00273584)            | 1991 | Only in E. coli K12. Do not use. |
 | TGTG(G\|T)ATAAC                                                  | [[9]](https://doi.org/10.1016/0022-2836(85)90299-2)  | 1985 | Matsui-box                       |
 | TTAT(A\|C)CA(A\|C)A                                              | [[10]](https://doi.org/10.1016/0092-8674(84)90284-8) | 1984 | The first consensus              |
+
